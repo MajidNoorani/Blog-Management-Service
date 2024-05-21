@@ -1,0 +1,40 @@
+version: '3.9' # version of the code below
+
+services:
+  # list of services
+  app:
+    # name of service
+    build:
+      context: . # build the docker file inside the current directory
+      args:
+        - DEV=true
+    ports:
+      - "8013:8013" # maps the port of current machine to the port of container
+    volumes:
+      - ./app:/app # this helps to reflect any changes in code to container (wirthout re-building)
+      - blog-static-data:/vol/web
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8013"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=changeme
+      - DEBUG=1
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - blog-db-data:/var/lib/postgresql/data/blog
+    environment:
+      - POSTGRES_DB=devdb
+      - POSTGRES_USER=devuser
+      - POSTGRES_PASSWORD=changeme
+
+volumes:
+  blog-db-data:
+  blog-static-data:

@@ -1,0 +1,28 @@
+stages:
+  - test
+  - lint
+
+variables:
+  DOCKERHUB_USER: $DOCKERHUB_USER
+  DOCKERHUB_TOKEN: $DOCKERHUB_TOKEN
+
+before_script:
+  - echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+test-job:
+  stage: test
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker compose run --rm app sh -c "python manage.py wait_for_db &&
+                                         python manage.py migrate &&
+                                         python manage.py test"
+
+lint-job:
+  stage: lint
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker compose run --rm app sh -c "flake8"
