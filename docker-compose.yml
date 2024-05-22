@@ -19,15 +19,19 @@ services:
              python manage.py runserver 0.0.0.0:8013"
     environment:
       - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
       - DEBUG=1
     depends_on:
       - db
 
   db:
     image: postgres:16-alpine
+    ports:
+      - 5433:5432
     volumes:
       - blog-db-data:/var/lib/postgresql/data/blog
     environment:

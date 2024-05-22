@@ -17,7 +17,7 @@ RUN python -m venv /py && \
     # deps for psycopg2
     apk add --update --no-cache postgresql-client jpeg-dev && \
     # linux-headers is added for WSGI
-    apk add --update --no-cache --virtual .tmp-build-deps gcc python3-dev \
+    apk add --update --no-cache --virtual .tmp-build-deps\
         build-base postgresql-dev musl-dev zlib zlib-dev linux-headers&& \
     /py/bin/pip install -r /tmp/requirements.txt && \
     if [ $DEV = "true" ]; \
