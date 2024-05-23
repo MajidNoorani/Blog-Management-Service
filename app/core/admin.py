@@ -59,7 +59,12 @@ class PostCategoryAdmin(admin.ModelAdmin):
     list_display = ['title', 'parentPostCategoryId', 'description',
                     'status', 'createdBy', 'createdDate', 'updatedBy',
                     'updatedDate', 'image']
+    # filters and search
     list_filter = ['status']
+    search_fields = ['title',
+                     'parentPostCategoryId__title',
+                     'createdBy__email',
+                     'updatedBy__email']
     # edit postCategories page
     fieldsets = (
         (
@@ -103,18 +108,8 @@ class PostCategoryAdmin(admin.ModelAdmin):
             obj.updatedDate = timezone.now()
         super().save_model(request, obj, form, change)
 
-    # def save_formset(self, request, form, formset, change):
-    #     """Override save_formset to handle updating related objects."""
-    #     instances = formset.save(commit=False)
-    #     for obj in formset.deleted_objects:
-    #         obj.delete()
-    #     for instance in instances:
-    #         if isinstance(instance, models.PostCategory):
-    #             # Check if it's an instance of PostCategory
-    #             instance.updatedBy = request.user
-    #             instance.updatedDate = timezone.now()
-    #             instance.save()
-    #     formset.save_m2m()
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(models.User, UserAdmin)
