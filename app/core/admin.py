@@ -57,8 +57,7 @@ class PostCategoryAdmin(admin.ModelAdmin):
     # list of postCategories page
     ordering = ['id']
     list_display = ['title', 'parentPostCategoryId', 'description',
-                    'status', 'createdBy', 'createdDate', 'updatedBy',
-                    'updatedDate', 'image']
+                    'status', 'updatedDate', 'image']
     # filters and search
     list_filter = ['status']
     search_fields = ['title',
@@ -94,6 +93,9 @@ class PostCategoryAdmin(admin.ModelAdmin):
                        'updatedBy', 'updatedDate'),
         }),
     )
+
+    # enable save as new button on update
+    save_as = True
 
     def save_model(self, request, obj, form, change):
         """

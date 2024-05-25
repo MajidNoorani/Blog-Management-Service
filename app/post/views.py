@@ -3,18 +3,19 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import (
     permissions,
     viewsets,
-    mixins,
+    # mixins,
     status
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.models import PostCategory
-from drf_spectacular.utils import (
-    extend_schema,
-    extend_schema_view,
-    OpenApiParameter,
-    OpenApiTypes
-)
+# from drf_spectacular.utils import (
+#     extend_schema,
+#     extend_schema_view,
+#     OpenApiParameter,
+#     OpenApiTypes
+# )
+from django.utils import timezone
 
 
 # @extend_schema_view(
@@ -59,7 +60,7 @@ class PostCategoryViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return serializers.PostCategorySerializer
         elif self.action == 'upload_image':
-            return serializers.RecipeImageSerializer
+            return serializers.PostCategoryImageSerializer
 
         return self.serializer_class
 
@@ -67,14 +68,20 @@ class PostCategoryViewSet(viewsets.ModelViewSet):
         """Create a new recipe"""
         serializer.save(
             createdBy=self.request.user,
-            updatedBy=self.request.user
+            updatedBy=self.request.user,
             )
+
+    def perform_update(self, serializer):
+        serializer.save(
+            updatedBy=self.request.user,
+            updatedDate=timezone.now()
+        )
 
     @action(methods=['POST'], detail=True, url_path='upload-image')
     def upload_image(self, request, pk=None):
         """Upload an image to postCategory."""
-        recipe = self.get_object()
-        serializer = self.get_serializer(recipe, data=request.data)
+        postCategory = self.get_object()
+        serializer = self.get_serializer(postCategory, data=request.data)
 
         if serializer.is_valid():
             serializer.save()
