@@ -1,9 +1,8 @@
-from django.db import models  # noqa
+from django.db import models
 from django.utils import timezone
 from django.conf import settings
 import os
 import uuid
-
 
 def blog_category_image_file_path(instance, filename):
     """Generate file path for new recipe image"""
@@ -142,46 +141,41 @@ class Post(AuditModel):
         )
 
     def can_change(self, new_status):
-        if self.status == 'draft' and new_status in ['draft',
-                                                     'publish',
-                                                     'archive']:
+        if self.postStatus == 'draft' and new_status in ['draft',
+                                                         'publish',
+                                                         'archive']:
             return True
-        elif self.status == 'publish' and new_status == 'archive':
+        elif self.postStatus == 'publish' and new_status == 'archive':
             return True
         return False
 
     def change_to(self, new_status):
-        if self.can_transition(new_status):
-            self.status = new_status
+        if self.can_change(new_status):
+            self.postStatus = new_status
             self.save()
         else:
             raise ValueError(
-                f"Cannot change status from {self.status} to {new_status}"
+                f"""
+                Cannot change status of {self.title} from
+                {self.postStatus} to {new_status}
+                """
                 )
 
     def __str__(self):
         return self.title
 
 
-class Tag(models.Model):
+class Tag(AuditModel):
     """Tags for filtering posts."""
     name = models.CharField(max_length=255)
-    createdBy = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
 
     def __str__(self):
         return self.name
 
 
-class SEOKeywords(models.Model):
+class SEOKeywords(AuditModel):
     """SEO keywrods for the posts."""
-    name = models.CharField(max_length=255)
-    createdBy = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE
-    )
+    keyword = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.name
+        return self.keyword
