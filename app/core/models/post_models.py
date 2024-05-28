@@ -4,6 +4,7 @@ from django.conf import settings
 import os
 import uuid
 
+
 def blog_category_image_file_path(instance, filename):
     """Generate file path for new recipe image"""
     ext = os.path.splitext(filename)[1]
@@ -21,17 +22,25 @@ def post_image_file_path(instance, filename):
 
 
 class AuditModel(models.Model):
-    createdDate = models.DateTimeField(default=timezone.now)
+    createdDate = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Created Date"
+        )
     createdBy = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.RESTRICT,
-        related_name="%(class)s_created_by"
+        related_name="%(class)s_created_by",
+        verbose_name="Created By"
     )
-    updatedDate = models.DateTimeField(default=timezone.now)
+    updatedDate = models.DateTimeField(
+        default=timezone.now,
+        verbose_name="Updated Date"
+        )
     updatedBy = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.RESTRICT,
-        related_name="%(class)s_updated_by"
+        related_name="%(class)s_updated_by",
+        verbose_name="Updated By"
     )
 
     class Meta:
@@ -62,6 +71,10 @@ class PostCategory(AuditModel):
         help_text='Indicates the status of the category'
     )
 
+    class Meta:
+        verbose_name = "Post Category"
+        verbose_name_plural = "Post Categories"
+
     def __str__(self):
         return self.title
 
@@ -73,6 +86,12 @@ class Post(AuditModel):
         ('draft', 'Draft'),
         ('publish', 'Publish'),
         ('archive', 'Archive'),
+    ]
+
+    REVIEW_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('accept', 'Accept'),
+        ('reject', 'Reject'),
     ]
     title = models.CharField(
         max_length=100,
@@ -89,6 +108,11 @@ class Post(AuditModel):
     image = models.ImageField(
         upload_to=post_image_file_path,
         verbose_name="Post Image")
+    authorName = models.CharField(
+        max_length=100,
+        null=False,
+        blank=False,
+    )
     tags = models.ManyToManyField(
         'Tag',
         verbose_name="Post Tags")
@@ -105,6 +129,12 @@ class Post(AuditModel):
         null=True,
         blank=True,
         verbose_name="Post Archive Date")
+    reviewStatus = models.CharField(
+        max_length=10,
+        choices=REVIEW_STATUS_CHOICES,
+        default='pending',
+        verbose_name="Review Status"
+    )
     isExternalSource = models.BooleanField(
         verbose_name="Is External Source", default=False)
     externalLink = models.CharField(
@@ -114,7 +144,9 @@ class Post(AuditModel):
         verbose_name="External link")
     commentsEnabled = models.BooleanField(
         null=False,
-        blank=False)
+        blank=False,
+        default=True,
+        verbose_name="Enable Comments")
     metaDescription = models.CharField(
         max_length=255,
         null=True,
@@ -135,10 +167,24 @@ class Post(AuditModel):
         Estimates the time required to read the blog post
         """
         )
+    excerpt = models.CharField(
+        max_length=255,
+        null=False,
+        blank=False,
+        verbose_name="Excerpt",
+        help_text="""
+        Provides a short summary or teaser of the blog post,
+        displayed on archive pages or in search results.
+        """
+    )
     relatedPosts = models.ManyToManyField(
         'self',
         blank=True
         )
+
+    class Meta:
+        verbose_name = "Post"
+        verbose_name_plural = "Posts"
 
     def can_change(self, new_status):
         if self.postStatus == 'draft' and new_status in ['draft',
@@ -169,6 +215,10 @@ class Tag(AuditModel):
     """Tags for filtering posts."""
     name = models.CharField(max_length=255)
 
+    class Meta:
+        verbose_name = "Tag"
+        verbose_name_plural = "Tags"
+
     def __str__(self):
         return self.name
 
@@ -176,6 +226,10 @@ class Tag(AuditModel):
 class SEOKeywords(AuditModel):
     """SEO keywrods for the posts."""
     keyword = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = "SEO Keyword"
+        verbose_name_plural = "SEO Keywords"
 
     def __str__(self):
         return self.keyword

@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 from core import models
+from django.utils.safestring import mark_safe
 
 
 class PostCategoryAdmin(admin.ModelAdmin):
@@ -103,7 +104,7 @@ class PostAdmin(admin.ModelAdmin):
                      'postCategoryId__title',
                      'createdBy__email',
                      'updatedBy__email']
-    # edit postCategories page
+    # edit Posts page
     fieldsets = (
         (
             _('General Information'),
@@ -115,16 +116,22 @@ class PostAdmin(admin.ModelAdmin):
         ),
         (
             _('Status'),
-            {'fields': ('postStatus',)}
+            {
+                'fields': ('postStatus',),
+                'description': mark_safe(
+                    """
+                    <p style="font-size: 12px; color: #872b72;">
+                    You can change the status with <strong>Acions</strong>
+                    of list view page.
+                    </p>
+                    """
+                    )
+             }
         ),
         (
             _('Comments'),
             {'fields': ('commentsEnabled',)}
         ),
-        # (
-        #     _('Extra Information'),
-        #     {'fields': ('relatedPosts',)}
-        # ),
         (
             _('Audit Information'),
             {'fields': (
@@ -132,9 +139,8 @@ class PostAdmin(admin.ModelAdmin):
                 'postPublishDate', 'postArchivedDate'
                 )}
         ),
-
-
     )
+
     readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate',
                        'postPublishDate', 'postArchivedDate', 'postStatus']
     # Add post category page
@@ -166,13 +172,17 @@ class PostAdmin(admin.ModelAdmin):
 
     def display_tags(self, obj):
         """Create a string representation of the tags."""
-        return ", ".join(tag.name for tag in obj.tags.all())
+        return ", ".join(
+            tag.name for tag in obj.tags.all()
+            )
     display_tags.short_description = 'Tags'
 
     def display_relatedPosts(self, obj):
         """Create a string representation of the tags."""
-        return ", ".join(post.title for post in obj.relatedPosts.all())
-    display_relatedPosts.short_description = 'related Posts'
+        return ", ".join(
+            post.title for post in obj.relatedPosts.all()
+            )
+    display_relatedPosts.short_description = 'Related Posts'
 
     actions = ['make_draft', 'make_publish', 'make_archive']
 
@@ -213,11 +223,11 @@ class PostAdmin(admin.ModelAdmin):
             obj.updatedDate = timezone.now()
 
             # Update the postPublishDate if status is changed to 'publish'
-            if obj.postStatus == 'publish' and 'postStatus' in form.changed_data:
+            if obj.postStatus == 'publish' and 'postStatus' in form.changed_data:  # noqa
                 obj.postPublishDate = timezone.now()
 
             # Update the postArchivedDate if status is changed to 'archive'
-            if obj.postStatus == 'archive' and 'postStatus' in form.changed_data:
+            if obj.postStatus == 'archive' and 'postStatus' in form.changed_data:  # noqa
                 obj.postArchivedDate = timezone.now()
 
         super().save_model(request, obj, form, change)
