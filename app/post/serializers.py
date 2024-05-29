@@ -55,14 +55,14 @@ class PostCategoryDetailSerializer(PostCategorySerializer):
         ]
 
 
-class PostCategoryImageSerializer(serializers.ModelSerializer):
-    """serializer for uploading image to postCategory."""
+# class PostCategoryImageSerializer(serializers.ModelSerializer):
+#     """serializer for uploading image to postCategory."""
 
-    class Meta:
-        model = PostCategory
-        fields = ['id', 'image']
-        read_only_fields = ['id']
-        extra_kwargs = {'image': {'required': True}}
+#     class Meta:
+#         model = PostCategory
+#         fields = ['id', 'image']
+#         read_only_fields = ['id']
+#         extra_kwargs = {'image': {'required': True}}
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -98,10 +98,11 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = ['id', 'title', 'postCategoryId', 'content', 'tags',
-                  'postStatus', 'isExternalSource', 'externalLink',
+                  'postStatus', 'reviewStatus', 'isExternalSource',
+                  'externalLink', 'excerpt', 'authorname',
                   'metaDescription', 'readTime', 'relatedPosts']
-        read_only_fields = ['id', 'postStatus']
-        extra_kwargs = {'image': {'required': False}}
+        read_only_fields = ['id', 'reviewStatus']
+        extra_kwargs = {'image': {'required': True}}
 
     def _get_or_create_tags(self, tags, post):
         """Handle getting or creating tags as needed."""
@@ -171,19 +172,21 @@ class PostDetailSerializer(PostSerializer):
             'createdBy',
             'createdDate',
             'updatedBy',
-            'updatedDate'
+            'updatedDate',
+            'reviewResponseDate'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [
             'createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-            'postPublishDate', 'commentsEnabled', 'seoKeywords'
+            'postPublishDate', 'commentsEnabled', 'seoKeywords',
+            'reviewResponseDate'
         ]
 
 
-class PostImageSerializer(serializers.ModelSerializer):
-    """serializer for uploading image to post."""
+# class PostImageSerializer(serializers.ModelSerializer):
+#     """serializer for uploading image to post."""
 
-    class Meta:
-        model = Post
-        fields = ['id', 'image']
-        read_only_fields = ['id']
-        extra_kwargs = {'image': {'required': True}}
+#     class Meta:
+#         model = Post
+#         fields = ['id', 'image']
+#         read_only_fields = ['id']
+#         extra_kwargs = {'image': {'required': True}}

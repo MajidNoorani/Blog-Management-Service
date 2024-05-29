@@ -96,10 +96,10 @@ class PostAdmin(admin.ModelAdmin):
     # list of postCategories page
     ordering = ['-updatedDate', 'title']
     list_display = ['title', 'postStatus', 'postCategoryId',
-                    'display_tags',
-                    'image', 'updatedDate', 'updatedBy']
+                    'reviewStatus', 'display_tags',
+                    'image', 'createdDate', 'createdBy']
     # filters and search
-    list_filter = ['postStatus']
+    list_filter = ['postStatus', 'reviewStatus']
     search_fields = ['title',
                      'postCategoryId__title',
                      'createdBy__email',
@@ -110,8 +110,8 @@ class PostAdmin(admin.ModelAdmin):
             _('General Information'),
             {'fields': (
                 'title', 'postCategoryId', 'content', 'image',
-                'isExternalSource', 'externalLink',
-                'readTime', 'metaDescription'
+                'authorName', 'isExternalSource', 'externalLink',
+                'readTime', 'excerpt', 'metaDescription'
                 )}
         ),
         (
@@ -136,23 +136,26 @@ class PostAdmin(admin.ModelAdmin):
             _('Audit Information'),
             {'fields': (
                 'createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-                'postPublishDate', 'postArchivedDate'
+                'postPublishDate', 'postArchivedDate', 'reviewResponseDate'
                 )}
         ),
     )
 
     readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-                       'postPublishDate', 'postArchivedDate', 'postStatus']
-    # Add post category page
+                       'postPublishDate', 'postArchivedDate', 'postStatus',
+                       'reviewStatus', 'reviewResponseDate']
+    # Add post page
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('title', 'postCategoryId', 'content', 'image',
                        'display_tags', 'isExternalSource', 'externalLink',
                        'readTime', 'metaDescription', 'postStatus',
-                       'commentsEnabled', 'display_seokeywords',
+                       'reviewStatus', 'commentsEnabled', 'excerpt',
+                       'display_seokeywords', 'authorName',
                        'relatedPosts', 'createdBy', 'createdDate', 'updatedBy',
-                       'updatedDate', 'postPublishDate', 'postArchivedDate'),
+                       'updatedDate', 'postPublishDate', 'postArchivedDate',
+                       'reviewResponseDate'),
         }),
     )
 
@@ -184,31 +187,31 @@ class PostAdmin(admin.ModelAdmin):
             )
     display_relatedPosts.short_description = 'Related Posts'
 
-    actions = ['make_draft', 'make_publish', 'make_archive']
+    actions = ['make_accepted', 'make_rejected']
 
-    def make_draft(self, request, queryset):
+    # def make_draft(self, request, queryset):
+    #     for post in queryset:
+    #         try:
+    #             post.change_to('draft')
+    #         except ValueError as e:
+    #             self.message_user(request, f"Error: {e}", level='ERROR')
+    # make_draft.short_description = 'Mark selected posts as Draft'
+
+    def make_accepted(self, request, queryset):
         for post in queryset:
             try:
-                post.change_to('draft')
+                post.change_reviewStatus_to('accept')
             except ValueError as e:
                 self.message_user(request, f"Error: {e}", level='ERROR')
-    make_draft.short_description = 'Mark selected posts as Draft'
+    make_accepted.short_description = 'Accept'
 
-    def make_publish(self, request, queryset):
+    def make_rejected(self, request, queryset):
         for post in queryset:
             try:
-                post.change_to('publish')
+                post.change_reviewStatus_to('reject')
             except ValueError as e:
                 self.message_user(request, f"Error: {e}", level='ERROR')
-    make_publish.short_description = 'Mark selected posts as Publish'
-
-    def make_archive(self, request, queryset):
-        for post in queryset:
-            try:
-                post.change_to('archive')
-            except ValueError as e:
-                self.message_user(request, f"Error: {e}", level='ERROR')
-    make_archive.short_description = 'Mark selected posts as Archive'
+    make_rejected.short_description = 'Reject'
 
     def save_model(self, request, obj, form, change):
         """

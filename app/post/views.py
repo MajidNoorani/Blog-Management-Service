@@ -58,13 +58,13 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
     def get_queryset(self):
         """Retrieve postCategories."""
         queryset = self.queryset
-        return queryset.order_by('-id').distinct()
+        return queryset.order_by('title').distinct()
 
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.PostCategorySerializer
-        elif self.action == 'upload_image':
-            return serializers.PostCategoryImageSerializer
+        # elif self.action == 'upload_image':
+        #     return serializers.PostCategoryImageSerializer
 
         return self.serializer_class
 
@@ -131,21 +131,37 @@ class PostViewSet(mixins.RetrieveModelMixin,
         """Convert list of strings to integers."""
         return [int(str_id) for str_id in qs.split(',')]
 
+    def _params_to_strings(self, qs):
+        """Convert list of strings to integers."""
+        return qs.split(',')
+
     def get_queryset(self):
         """Retrieve recipe for authenticated user."""
         tags = self.request.query_params.get('tags')
+        postCategoryId = self.request.query_params.get('postCategoryId')
+        authorName = self.request.query_params.get('authorName')
+        createdDate = self.request.query_params.get('createdDate')
         queryset = self.queryset
         if tags:
             tag_ids = self._params_to_ints(tags)
             queryset = queryset.filter(tags__id__in=tag_ids)
+        if postCategoryId:
+            postCategoryIds = self._params_to_ints(postCategoryId)
+            queryset = queryset.filter(postCategoryId__in=postCategoryIds)
+        if authorName:
+            authorNames = self._params_to_strings(authorName)
+            queryset = queryset.filter(authorName__in=authorNames)
+        if createdDate:
+            createdDate_rage = self._params_to_strings(createdDate)
+            queryset = queryset.filter(createdDate__range=createdDate_rage)
 
-        return queryset.all().order_by('-updatedDate').distinct()
+        return queryset.all().order_by('-createdDate').distinct()
 
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.PostSerializer
-        elif self.action == 'upload_image':
-            return serializers.PostImageSerializer
+        # elif self.action == 'upload_image':
+        #     return serializers.PostImageSerializer
 
         return self.serializer_class
 
