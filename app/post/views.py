@@ -63,8 +63,8 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.PostCategorySerializer
-        # elif self.action == 'upload_image':
-        #     return serializers.PostCategoryImageSerializer
+        elif self.action == 'upload_image':
+            return serializers.PostCategoryImageSerializer
 
         return self.serializer_class
 
@@ -94,8 +94,6 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# from rest_framework.parsers import MultiPartParser, FormParser
-
 @extend_schema_view(
     list=extend_schema(
         parameters=[
@@ -103,6 +101,21 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
                 'tags',
                 OpenApiTypes.STR,
                 description='Comma separated list of tag IDs to filter',
+            ),
+            OpenApiParameter(
+                'authorName',
+                OpenApiTypes.STR,
+                description='Name of author',
+            ),
+            OpenApiParameter(
+                'postCategoryId',
+                OpenApiTypes.INT,
+                description='ID of post category',
+            ),
+            OpenApiParameter(
+                'createdDate',
+                OpenApiTypes.STR,
+                description='Comma separated of the start and end date',
             ),
         ]
     )
@@ -117,8 +130,6 @@ class PostViewSet(mixins.RetrieveModelMixin,
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Post.objects.all()
-
-    # parser_classes = (MultiPartParser, FormParser)
 
     def get_allowed_methods(self):
         methods = super().get_allowed_methods()
@@ -149,8 +160,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
             postCategoryIds = self._params_to_ints(postCategoryId)
             queryset = queryset.filter(postCategoryId__in=postCategoryIds)
         if authorName:
-            authorNames = self._params_to_strings(authorName)
-            queryset = queryset.filter(authorName__in=authorNames)
+            queryset = queryset.filter(authorName=authorName)
         if createdDate:
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
@@ -160,8 +170,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.PostSerializer
-        # elif self.action == 'upload_image':
-        #     return serializers.PostImageSerializer
+        elif self.action == 'upload_image':
+            return serializers.PostImageSerializer
 
         return self.serializer_class
 

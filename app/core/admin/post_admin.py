@@ -163,6 +163,11 @@ class PostAdmin(admin.ModelAdmin):
         TagInline, SEOKeywordsInline, RelatedPostInline
     ]
 
+    # def get_form(self, request, obj=None, **kwargs):
+    #     form = super(PostAdmin, self).get_form(request, obj, **kwargs)
+    #     form.base_fields['content'].widget.attrs['style'] = 'width: 45em;'
+    #     return form
+
     # enable save as new button on update
     save_as = True
 

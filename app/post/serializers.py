@@ -55,14 +55,14 @@ class PostCategoryDetailSerializer(PostCategorySerializer):
         ]
 
 
-# class PostCategoryImageSerializer(serializers.ModelSerializer):
-#     """serializer for uploading image to postCategory."""
+class PostCategoryImageSerializer(serializers.ModelSerializer):
+    """serializer for uploading image to postCategory."""
 
-#     class Meta:
-#         model = PostCategory
-#         fields = ['id', 'image']
-#         read_only_fields = ['id']
-#         extra_kwargs = {'image': {'required': True}}
+    class Meta:
+        model = PostCategory
+        fields = ['id', 'image']
+        read_only_fields = ['id']
+        extra_kwargs = {'image': {'required': True}}
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -83,10 +83,29 @@ class SEOKeywordsSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+# from django_quill.fields import QuillField
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(many=True, required=False)
     # seoKeywords = SEOKeywordsSerializer(many=True, required=False)
+    # content = serializers.SerializerMethodField()
+
+    # def get_content(self, obj):
+    #     # Assuming obj.content is the QuillField
+
+    #     return obj.content.str()
+
+    # def get_content(self, obj):
+    #     # Assuming obj.content is the QuillField
+    #     # Accessing the raw JSON data stored in the QuillField
+    #     # def value_to_string(self, obj):
+    #     #     value = self.value_from_object(obj)
+    #     #     return self.get_prep_value(value) # Access the QuillField content
+
+    #     return obj.content # Adjust based on the actual attribute or method
+
 
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
@@ -99,8 +118,9 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'title', 'postCategoryId', 'content', 'tags',
                   'postStatus', 'reviewStatus', 'isExternalSource',
-                  'externalLink', 'excerpt', 'authorname',
-                  'metaDescription', 'readTime', 'relatedPosts']
+                  'externalLink', 'excerpt', 'authorName',
+                  'metaDescription', 'readTime', 'relatedPosts',
+                  'image']
         read_only_fields = ['id', 'reviewStatus']
         extra_kwargs = {'image': {'required': True}}
 
@@ -113,13 +133,6 @@ class PostSerializer(serializers.ModelSerializer):
                           'updatedBy': self.context['request'].user}
             )
             post.tags.add(tag_obj)
-
-    # def _get_post(self, relatedPosts, post):
-    #     """Handle getting posts as needed."""
-    #     for relatedPost in relatedPosts:
-    #         related_post_obj = Post.objects.get(**relatedPost)
-
-    #         post.relatedPosts.add(related_post_obj)
 
     def _get_post(self, relatedPosts, post):
         """Handle getting posts as needed."""
@@ -165,7 +178,6 @@ class PostDetailSerializer(PostSerializer):
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + [
-            'image',
             'postPublishDate',
             'commentsEnabled',
             'seoKeywords',
@@ -182,11 +194,11 @@ class PostDetailSerializer(PostSerializer):
         ]
 
 
-# class PostImageSerializer(serializers.ModelSerializer):
-#     """serializer for uploading image to post."""
+class PostImageSerializer(serializers.ModelSerializer):
+    """serializer for uploading image to post."""
 
-#     class Meta:
-#         model = Post
-#         fields = ['id', 'image']
-#         read_only_fields = ['id']
-#         extra_kwargs = {'image': {'required': True}}
+    class Meta:
+        model = Post
+        fields = ['id', 'image']
+        read_only_fields = ['id']
+        extra_kwargs = {'image': {'required': True}}

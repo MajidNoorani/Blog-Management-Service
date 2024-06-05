@@ -26,9 +26,12 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    # Add other origins as needed
+]
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,12 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
     'core',
     'user',
-    'post'
+    'post',
+    'django_quill',
 ]
 
 MIDDLEWARE = [
@@ -54,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'app.urls'
@@ -149,4 +155,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # This allows us to upload image through the browsable interface
 SPECTACULAR_SETTINGS = {
     'COMPONENT_SPLIT_REQUEST': True
+}
+
+
+# Rich Text Field Settings
+QUILL_CONFIGS = {
+    'default': {
+        'theme': 'snow',  # or 'bubble'
+    },
+    'placeholder': 'Start typing...',
+    'height': '1000px',  # Set the height
+    'width': '100%',  # Set the width
 }

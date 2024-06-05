@@ -2,8 +2,10 @@ from django.db import models
 from django.utils import timezone
 import os
 import uuid
-from djrichtextfield.models import RichTextField
-from _base_models import AuditModel
+# from djrichtextfield.models import RichTextField
+# from django_ckeditor_5.fields import CKEditor5Field
+from django_quill.fields import QuillField
+from ._base_models import AuditModel
 from django.conf import settings
 from django.core.validators import MaxValueValidator
 
@@ -74,7 +76,8 @@ class Post(AuditModel):
         max_length=100,
         unique=False,
         verbose_name="Post Title")
-    content = RichTextField(verbose_name="Post Content")
+    content = QuillField(
+        verbose_name="Post Content")
     postCategoryId = models.ForeignKey(
         PostCategory,
         null=False,
@@ -300,7 +303,7 @@ class PostDetail(models.Model):
     )
 
 
-class PostRate(models.model):
+class PostRate(models.Model):
     """Rating For Posts"""
     post = models.ForeignKey(
         'Post',

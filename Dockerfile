@@ -13,15 +13,16 @@ EXPOSE 8013
 
 ARG DEV=false
 RUN python -m venv /py && \
-    /py/bin/pip install --upgrade pip && \
+    /py/bin/pip install --default-timeout=100 --upgrade pip && \
     # deps for psycopg2
     apk add --update --no-cache postgresql-client jpeg-dev && \
     # linux-headers is added for WSGI
     apk add --update --no-cache --virtual .tmp-build-deps\
         build-base postgresql-dev musl-dev zlib zlib-dev linux-headers&& \
-    /py/bin/pip install -r /tmp/requirements.txt && \
+    /py/bin/pip install --default-timeout=100 --retries=3 -r /tmp/requirements.txt && \
+    # /py/bin/pip install /downloads/django-richtextfield-1.6.2.tar.gz && \
     if [ $DEV = "true" ]; \
-        then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
+        then /py/bin/pip install --default-timeout=100 --retries=3 -r /tmp/requirements.dev.txt ; \
     fi && \
     rm -rf /tmp && \
     apk del .tmp-build-deps && \
