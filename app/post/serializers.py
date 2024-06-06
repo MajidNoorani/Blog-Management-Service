@@ -120,7 +120,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'postStatus', 'reviewStatus', 'isExternalSource',
                   'externalLink', 'excerpt', 'authorName',
                   'metaDescription', 'readTime', 'relatedPosts',
-                  'image']
+                  'image', 'updatedDate']
         read_only_fields = ['id', 'reviewStatus']
         extra_kwargs = {'image': {'required': True}}
 
@@ -184,7 +184,6 @@ class PostDetailSerializer(PostSerializer):
             'createdBy',
             'createdDate',
             'updatedBy',
-            'updatedDate',
             'reviewResponseDate'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [

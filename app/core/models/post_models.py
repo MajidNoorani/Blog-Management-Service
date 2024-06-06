@@ -95,6 +95,7 @@ class Post(AuditModel):
         max_length=100,
         null=False,
         blank=False,
+        default="Unknown"
     )
     tags = models.ManyToManyField(
         'Tag',

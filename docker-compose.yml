@@ -30,14 +30,14 @@ services:
 
   db:
     image: postgres:16-alpine
-    ports:
-      - 5433:5432
+    # ports:
+    #   - 5433:5432
     volumes:
       - blog-db-data:/var/lib/postgresql/data/blog
     environment:
-      - POSTGRES_DB=devdb
-      - POSTGRES_USER=devuser
-      - POSTGRES_PASSWORD=changeme
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASS}
 
 volumes:
   blog-db-data:

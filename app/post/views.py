@@ -165,7 +165,9 @@ class PostViewSet(mixins.RetrieveModelMixin,
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
 
-        return queryset.all().order_by('-createdDate').distinct()
+        return queryset.filter(
+            reviewStatus='accept',
+            postStatus='publish').order_by('-createdDate').distinct()
 
     def get_serializer_class(self):
         if self.action == 'list':
