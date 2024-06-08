@@ -174,15 +174,17 @@ class Post(AuditModel):
         verbose_name = "Post"
         verbose_name_plural = "Posts"
 
-    def can_change_postStatus(self, new_status):
-        if self.postStatus == 'draft' and new_status == 'publish':
+    def _can_change_postStatus(self, new_status):
+        if self.postStatus == 'draft' and new_status in ['draft',
+                                                         'publish']:
             return True
-        elif self.postStatus == 'publish' and new_status == 'archive':
+        elif self.postStatus == 'publish' and new_status in ['publish',
+                                                             'archive']:
             return True
         return False
 
     def change_postStatus_to(self, new_status):
-        if self.can_change_postStatus(new_status):
+        if self._can_change_postStatus(new_status):
             self.postStatus = new_status
             self.save()
         else:
@@ -193,18 +195,21 @@ class Post(AuditModel):
                 """
                 )
 
-    def can_change_reviewStatus(self, new_status):
-        if self.reviewStatus == 'pending' and new_status in ['accept',
+    def _can_change_reviewStatus(self, new_status):
+        if self.reviewStatus == 'pending' and new_status in ['pending',
+                                                             'accept',
                                                              'reject']:
             return True
-        elif self.reviewStatus == 'accept' and new_status == 'reject':
+        elif self.reviewStatus == 'accept' and new_status in ['accept',
+                                                              'reject']:
             return True
-        elif self.reviewStatus == 'reject' and new_status == 'accept':
+        elif self.reviewStatus == 'reject' and new_status in ['reject',
+                                                              'accept']:
             return True
         return False
 
     def change_reviewStatus_to(self, new_status):
-        if self.can_change_reviewStatus(new_status):
+        if self._can_change_reviewStatus(new_status):
             self.reviewStatus = new_status
             self.save()
         else:

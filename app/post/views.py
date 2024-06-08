@@ -8,6 +8,7 @@ from rest_framework import (
 )
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from core.models import PostCategory, Post, Tag
 from drf_spectacular.utils import (
     extend_schema,
@@ -16,6 +17,7 @@ from drf_spectacular.utils import (
     OpenApiTypes
 )
 from django.utils import timezone
+import math
 
 
 # @extend_schema_view(
@@ -94,6 +96,18 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class CustomPageNumberPagination(PageNumberPagination):
+    def get_paginated_response(self, data):
+        # Calculate total number of pages
+        total_pages = math.ceil(self.page.paginator.count / self.page_size)
+        return Response({
+            'total_pages': total_pages,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
+
 @extend_schema_view(
     list=extend_schema(
         parameters=[
@@ -135,6 +149,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Post.objects.all()
+    pagination_class = CustomPageNumberPagination
 
     def get_allowed_methods(self):
         methods = super().get_allowed_methods()
@@ -157,10 +172,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
         createdDate = self.request.query_params.get('createdDate')
-        print(self.request.query_params.get('currentUserPosts'))
         currentUserPosts = bool(
             int(self.request.query_params.get('currentUserPosts', 0)))
-        print(currentUserPosts)
         queryset = self.queryset
         if tags:
             tag_ids = self._params_to_ints(tags)
@@ -174,7 +187,6 @@ class PostViewSet(mixins.RetrieveModelMixin,
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
         if currentUserPosts:
-            print('here')
             user = self.request.user
             queryset = queryset.filter(createdBy=user)
             return queryset.order_by('-createdDate').distinct()
