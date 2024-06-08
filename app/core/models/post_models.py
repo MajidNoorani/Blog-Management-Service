@@ -194,18 +194,18 @@ class Post(AuditModel):
                 )
 
     def can_change_reviewStatus(self, new_status):
-        if self.postStatus == 'pending' and new_status in ['accept',
-                                                           'reject']:
+        if self.reviewStatus == 'pending' and new_status in ['accept',
+                                                             'reject']:
             return True
-        elif self.postStatus == 'accept' and new_status == 'reject':
+        elif self.reviewStatus == 'accept' and new_status == 'reject':
             return True
-        elif self.postStatus == 'reject' and new_status == 'accept':
+        elif self.reviewStatus == 'reject' and new_status == 'accept':
             return True
         return False
 
     def change_reviewStatus_to(self, new_status):
         if self.can_change_reviewStatus(new_status):
-            self.postStatus = new_status
+            self.reviewStatus = new_status
             self.save()
         else:
             raise ValueError(

@@ -106,7 +106,6 @@ class PostSerializer(serializers.ModelSerializer):
 
     #     return obj.content # Adjust based on the actual attribute or method
 
-
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
         allow_null=True,
@@ -134,7 +133,7 @@ class PostSerializer(serializers.ModelSerializer):
             )
             post.tags.add(tag_obj)
 
-    def _get_post(self, relatedPosts, post):
+    def _get_related_post(self, relatedPosts, post):
         """Handle getting posts as needed."""
         for relatedPost in relatedPosts:
             related_post_obj = Post.objects.get(pk=relatedPost.id)
@@ -147,7 +146,7 @@ class PostSerializer(serializers.ModelSerializer):
         post = Post.objects.create(
             **validated_data)
         self._get_or_create_tags(tags, post)
-        self._get_post(relatedPosts, post)
+        self._get_related_post(relatedPosts, post)
 
         return post
 
@@ -164,7 +163,7 @@ class PostSerializer(serializers.ModelSerializer):
         if relatedPosts is not None:
             # empty list is not None
             instance.relatedPosts.clear()
-            self._get_post(relatedPosts, instance)
+            self._get_related_post(relatedPosts, instance)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

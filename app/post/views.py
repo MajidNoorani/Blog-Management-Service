@@ -117,6 +117,11 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
                 OpenApiTypes.STR,
                 description='Comma separated of the start and end date',
             ),
+            OpenApiParameter(
+                'currentUserPosts',
+                OpenApiTypes.INT, enum=[0, 1],
+                description='If 1, only returns the current user posts',
+            ),
         ]
     )
 )
@@ -152,6 +157,10 @@ class PostViewSet(mixins.RetrieveModelMixin,
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
         createdDate = self.request.query_params.get('createdDate')
+        print(self.request.query_params.get('currentUserPosts'))
+        currentUserPosts = bool(
+            int(self.request.query_params.get('currentUserPosts', 0)))
+        print(currentUserPosts)
         queryset = self.queryset
         if tags:
             tag_ids = self._params_to_ints(tags)
@@ -164,6 +173,11 @@ class PostViewSet(mixins.RetrieveModelMixin,
         if createdDate:
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
+        if currentUserPosts:
+            print('here')
+            user = self.request.user
+            queryset = queryset.filter(createdBy=user)
+            return queryset.order_by('-createdDate').distinct()
 
         return queryset.filter(
             reviewStatus='accept',

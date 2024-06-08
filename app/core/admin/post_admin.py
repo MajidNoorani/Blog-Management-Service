@@ -142,7 +142,7 @@ class PostAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-                       'postPublishDate', 'postArchivedDate', 'postStatus',
+                       'postPublishDate', 'postArchivedDate',
                        'reviewStatus', 'reviewResponseDate']
     # Add post page
     add_fieldsets = (
@@ -192,7 +192,7 @@ class PostAdmin(admin.ModelAdmin):
             )
     display_relatedPosts.short_description = 'Related Posts'
 
-    actions = ['make_accepted', 'make_rejected']
+    actions = ['make_accepted', 'make_rejected', 'delete']
 
     # def make_draft(self, request, queryset):
     #     for post in queryset:
@@ -217,6 +217,14 @@ class PostAdmin(admin.ModelAdmin):
             except ValueError as e:
                 self.message_user(request, f"Error: {e}", level='ERROR')
     make_rejected.short_description = 'Reject'
+
+    def delete(self, request, queryset):
+        for post in queryset:
+            try:
+                post.delete()
+            except ValueError as e:
+                self.message_user(request, f"Error: {e}", level='ERROR')
+    delete.short_description = 'Delete'
 
     def save_model(self, request, obj, form, change):
         """
