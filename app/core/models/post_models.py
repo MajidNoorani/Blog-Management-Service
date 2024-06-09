@@ -3,8 +3,9 @@ from django.utils import timezone
 import os
 import uuid
 # from djrichtextfield.models import RichTextField
-# from django_ckeditor_5.fields import CKEditor5Field
-from django_quill.fields import QuillField
+from django_ckeditor_5.fields import CKEditor5Field
+# from ckeditor.fields import RichTextField
+# from django_quill.fields import QuillField
 from ._base_models import AuditModel
 from django.conf import settings
 from django.core.validators import MaxValueValidator
@@ -76,8 +77,10 @@ class Post(AuditModel):
         max_length=100,
         unique=False,
         verbose_name="Post Title")
-    content = QuillField(
-        verbose_name="Post Content")
+    # content = QuillField(
+    #     verbose_name="Post Content")
+    content = CKEditor5Field(
+        config_name='extends')
     postCategoryId = models.ForeignKey(
         PostCategory,
         null=False,

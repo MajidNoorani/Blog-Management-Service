@@ -20,32 +20,6 @@ from django.utils import timezone
 import math
 
 
-# @extend_schema_view(
-#     list=extend_schema(
-#         description=[
-#             OpenApiParameter(
-#                 'title',
-#                 OpenApiTypes.STR,
-#                 description='Name of category.',
-#             ),
-#             OpenApiParameter(
-#                 'parentPostCategoryId',
-#                 OpenApiTypes.INT,
-#                 description='ID of parent category.',
-#             ),
-#             OpenApiParameter(
-#                 'description',
-#                 OpenApiTypes.STR,
-#                 description='Optional',
-#             ),
-#             OpenApiParameter(
-#                 'image',
-#                 OpenApiTypes.STR,
-#                 description='Optional',
-#             )
-#         ]
-#     )
-# )
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
                           mixins.UpdateModelMixin,
                           mixins.CreateModelMixin,
@@ -104,8 +78,20 @@ class CustomPageNumberPagination(PageNumberPagination):
             'total_pages': total_pages,
             'next': self.get_next_link(),
             'previous': self.get_previous_link(),
+            'current_page_number': self.get_page_number(self.request,
+                                                        self.page.paginator),
             'results': data
         })
+
+    # def get_current_page_number(self):
+    #     if not self.page.has_next():
+    #         return None
+    #     url = self.request.build_absolute_uri()
+    #     page_number = self.page.next_page_number()
+    #     return replace_query_param(url, self.page_query_param, page_number)
+
+    # def current_page_number(self):
+    #     return self.paginator.validate_number(self.number)
 
 
 @extend_schema_view(

@@ -83,28 +83,9 @@ class SEOKeywordsSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
-# from django_quill.fields import QuillField
-
-
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(many=True, required=False)
-    # seoKeywords = SEOKeywordsSerializer(many=True, required=False)
-    # content = serializers.SerializerMethodField()
-
-    # def get_content(self, obj):
-    #     # Assuming obj.content is the QuillField
-
-    #     return obj.content.str()
-
-    # def get_content(self, obj):
-    #     # Assuming obj.content is the QuillField
-    #     # Accessing the raw JSON data stored in the QuillField
-    #     # def value_to_string(self, obj):
-    #     #     value = self.value_from_object(obj)
-    #     #     return self.get_prep_value(value) # Access the QuillField content
-
-    #     return obj.content # Adjust based on the actual attribute or method
 
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
@@ -140,11 +121,17 @@ class PostSerializer(serializers.ModelSerializer):
             post.relatedPosts.add(related_post_obj)
 
     def create(self, validated_data):
+        # tags and relatedPosts excluded from validated data
         tags = validated_data.pop('tags', [])
         relatedPosts = validated_data.pop('relatedPosts', [])
-        # tags and relatedPosts excluded from validated data
+        # content_data = validated_data.pop('content')
+        # by default the status of the post is draft
+        validated_data['postStatus'] = 'draft'
+        # validated_data['content'] = content_data
+
         post = Post.objects.create(
             **validated_data)
+        # post.content = CustomJsonField(**content_data)
         self._get_or_create_tags(tags, post)
         self._get_related_post(relatedPosts, post)
 
@@ -200,3 +187,10 @@ class PostImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image']
         read_only_fields = ['id']
         extra_kwargs = {'image': {'required': True}}
+
+
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.ImageField()
+    class Meta:
+        fields = ['file']
+
