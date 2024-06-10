@@ -190,7 +190,7 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 
 class FileUploadSerializer(serializers.Serializer):
-    file = serializers.ImageField()
-    class Meta:
-        fields = ['file']
+    file = serializers.FileField()
+    # class Meta:
+    #     fields = ['file']
 

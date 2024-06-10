@@ -162,14 +162,14 @@ SPECTACULAR_SETTINGS = {
 
 
 # Rich Text Field Settings
-QUILL_CONFIGS = {
-    'default': {
-        'theme': 'snow',  # or 'bubble'
-    },
-    'placeholder': 'Start typing...',
-    'height': '1000px',  # Set the height
-    'width': '100%',  # Set the width
-}
+# QUILL_CONFIGS = {
+#     'default': {
+#         'theme': 'snow',  # or 'bubble'
+#     },
+#     'placeholder': 'Start typing...',
+#     'height': '1000px',  # Set the height
+#     'width': '100%',  # Set the width
+# }
 
 
 # django_ckeditor_5
@@ -266,3 +266,14 @@ CKEDITOR_5_CONFIGS = {
 }
 
 CK_EDITOR_5_UPLOAD_FILE_VIEW_NAME = "post:custom_upload_file"
+
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]
+
+# Maximum size of uploaded files, in bytes
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB, adjust as needed
+
+# Maximum size of a request (request body), in bytes
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5 MB, adjust as needed

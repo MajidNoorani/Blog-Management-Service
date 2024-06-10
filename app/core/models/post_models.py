@@ -26,6 +26,13 @@ def post_image_file_path(instance, filename):
 
     return os.path.join('uploads', 'post', filename)
 
+def content_files_path(instance, filename):
+    """Generate file path for new post image"""
+    ext = os.path.splitext(filename)[1]
+    filename = f'{uuid.uuid4()}{ext}'
+
+    return os.path.join('django_ckeditor_5', 'uploads', filename)
+
 
 class PostCategory(AuditModel):
     """post category objects"""
@@ -330,4 +337,46 @@ class PostRate(models.Model):
         validators=[
             MaxValueValidator(5)
         ]
+    )
+
+
+
+class ContentFiles(models.Model):
+    """Comment objects for posts"""
+    post = models.ForeignKey(
+        'Post',
+        on_delete=models.CASCADE,
+        null=False,
+        blank=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.RESTRICT,
+        related_name="%(class)s_user"
+    )
+    file = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='comment_reply')
+    comment = models.CharField(
+        max_length=255,
+        null=False,
+        blank=False
+    )
+    likeCount = models.PositiveIntegerField(
+        help_text="""
+        Records the number of likes or thumbs-up the comment has received.
+        """,
+        null=True,
+        blank=True,
+        default=0
+    )
+    disLikeCount = models.PositiveIntegerField(
+        help_text="""
+        Records the number of dislikes or thumbs-down the comment has received.
+        """,
+        null=True,
+        blank=True,
+        default=0
     )

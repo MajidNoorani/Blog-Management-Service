@@ -78,8 +78,9 @@ class CustomPageNumberPagination(PageNumberPagination):
             'total_pages': total_pages,
             'next': self.get_next_link(),
             'previous': self.get_previous_link(),
-            'current_page_number': self.get_page_number(self.request,
-                                                        self.page.paginator),
+            'current_page_number': int(self.get_page_number(
+                self.request,
+                self.page.paginator)),
             'results': data
         })
 
@@ -245,3 +246,38 @@ class TagViewSet(BasePostAttrViewSet):
     # order of inputs is important
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
+
+import os
+from post.utils import CustomStorage
+from post.serializers import FileUploadSerializer
+from django.utils.crypto import get_random_string
+from django.core.files.base import ContentFile
+
+
+class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
+    """ViewSet for handling file uploads."""
+    serializer_class = FileUploadSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            file = serializer.validated_data['file']
+            # Generate a unique file name
+            filename = get_random_string(length=32) + os.path.splitext(file.name)[1]
+            # Path relative to MEDIA_ROOT
+            file_path = os.path.join('uploads', 'contentFiles', filename)
+            # Use custom storage to save the file
+            custom_storage = CustomStorage()
+            saved_path = custom_storage.save(file_path, ContentFile(file.read()))
+            # Construct the URL for the uploaded file
+            file_url = custom_storage.url(saved_path)
+
+            return Response({'url': file_url, 'uploaded': True}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['POST'], detail=False, url_path='upload')
+    def upload_file(self, request):
+        return self.create(request)
