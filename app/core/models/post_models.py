@@ -26,13 +26,6 @@ def post_image_file_path(instance, filename):
 
     return os.path.join('uploads', 'post', filename)
 
-def content_files_path(instance, filename):
-    """Generate file path for new post image"""
-    ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
-
-    return os.path.join('django_ckeditor_5', 'uploads', filename)
-
 
 class PostCategory(AuditModel):
     """post category objects"""
@@ -68,7 +61,6 @@ class PostCategory(AuditModel):
 
 class Post(AuditModel):
     """Post objects"""
-    # note: excerpt and reviewstatus seems to be redundant
     STATUS_CHOICES = [
         ('draft', 'Draft'),
         ('publish', 'Publish'),
@@ -84,8 +76,6 @@ class Post(AuditModel):
         max_length=100,
         unique=False,
         verbose_name="Post Title")
-    # content = QuillField(
-    #     verbose_name="Post Content")
     content = CKEditor5Field(
         config_name='extends')
     postCategoryId = models.ForeignKey(
@@ -96,8 +86,8 @@ class Post(AuditModel):
         on_delete=models.RESTRICT
         )
     image = models.ImageField(
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         upload_to=post_image_file_path,
         verbose_name="Post Image")
     authorName = models.CharField(
@@ -258,7 +248,7 @@ class SEOKeywords(AuditModel):
         return self.keyword
 
 
-class PostDetail(models.Model):
+class PostAnalytics(models.Model):
     """Post Detail objects"""
     post = models.OneToOneField(
         'Post',
@@ -339,44 +329,5 @@ class PostRate(models.Model):
         ]
     )
 
-
-
-class ContentFiles(models.Model):
-    """Comment objects for posts"""
-    post = models.ForeignKey(
-        'Post',
-        on_delete=models.CASCADE,
-        null=False,
-        blank=False)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.RESTRICT,
-        related_name="%(class)s_user"
-    )
-    file = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='comment_reply')
-    comment = models.CharField(
-        max_length=255,
-        null=False,
-        blank=False
-    )
-    likeCount = models.PositiveIntegerField(
-        help_text="""
-        Records the number of likes or thumbs-up the comment has received.
-        """,
-        null=True,
-        blank=True,
-        default=0
-    )
-    disLikeCount = models.PositiveIntegerField(
-        help_text="""
-        Records the number of dislikes or thumbs-down the comment has received.
-        """,
-        null=True,
-        blank=True,
-        default=0
-    )
+    class Meta:
+        unique_together = ('user', 'post',)

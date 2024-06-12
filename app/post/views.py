@@ -9,7 +9,7 @@ from rest_framework import (
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
-from core.models import PostCategory, Post, Tag
+from core.models import PostCategory, Post, Tag, PostRate
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -18,6 +18,12 @@ from drf_spectacular.utils import (
 )
 from django.utils import timezone
 import math
+import os
+from post.utils import CustomStorage
+from post.serializers import FileUploadSerializer
+from django.utils.crypto import get_random_string
+from django.core.files.base import ContentFile
+from django.http import Http404
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -84,16 +90,6 @@ class CustomPageNumberPagination(PageNumberPagination):
             'results': data
         })
 
-    # def get_current_page_number(self):
-    #     if not self.page.has_next():
-    #         return None
-    #     url = self.request.build_absolute_uri()
-    #     page_number = self.page.next_page_number()
-    #     return replace_query_param(url, self.page_query_param, page_number)
-
-    # def current_page_number(self):
-    #     return self.paginator.validate_number(self.number)
-
 
 @extend_schema_view(
     list=extend_schema(
@@ -125,6 +121,13 @@ class CustomPageNumberPagination(PageNumberPagination):
             ),
         ]
     )
+    # create=extend_schema(
+    #     request={
+    #         'application/json': serializers.PostDetailSerializer
+    #     },
+    #     responses={201: serializers.PostDetailSerializer},
+    #     description="Create a post"
+    # ),
 )
 class PostViewSet(mixins.RetrieveModelMixin,
                   mixins.UpdateModelMixin,
@@ -137,6 +140,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
     permission_classes = [permissions.IsAuthenticated]
     queryset = Post.objects.all()
     pagination_class = CustomPageNumberPagination
+    # parser_classes = (JSONParser, FormParser)
 
     def get_allowed_methods(self):
         methods = super().get_allowed_methods()
@@ -155,6 +159,10 @@ class PostViewSet(mixins.RetrieveModelMixin,
 
     def get_queryset(self):
         """Retrieve recipe for authenticated user."""
+
+        if self.action == 'upload_image':
+            return self.queryset.filter(createdBy=self.request.user)
+
         tags = self.request.query_params.get('tags')
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
@@ -178,9 +186,19 @@ class PostViewSet(mixins.RetrieveModelMixin,
             queryset = queryset.filter(createdBy=user)
             return queryset.order_by('-createdDate').distinct()
 
-        return queryset.filter(
+        # all the posts created by current user will be returned
+        # no matter they are published or not or accepted
+        queryset_current_user = queryset.filter(
+            createdBy=self.request.user)
+
+        queryset.filter(
             reviewStatus='accept',
-            postStatus='publish').order_by('-createdDate').distinct()
+            postStatus='publish')
+
+        combined_queryset = (
+            queryset_current_user | queryset
+            ).distinct().order_by('-createdDate')
+        return combined_queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -200,7 +218,14 @@ class PostViewSet(mixins.RetrieveModelMixin,
     @action(methods=['POST'], detail=True, url_path='upload-image')
     def upload_image(self, request, pk=None):
         """Upload an image to post."""
-        post = self.get_object()
+        try:
+            post = self.get_object()
+        except Http404:
+            return Response(
+                data={
+                    "detail":
+                        "Current user cannot edit the image of this post."},
+                status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(post, data=request.data)
 
         if serializer.is_valid():
@@ -247,15 +272,16 @@ class TagViewSet(BasePostAttrViewSet):
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
 
-import os
-from post.utils import CustomStorage
-from post.serializers import FileUploadSerializer
-from django.utils.crypto import get_random_string
-from django.core.files.base import ContentFile
 
-
+@extend_schema_view(
+    list=extend_schema(
+        description="""Use this endpoint to upload a file and get its url
+        to include it in content of a post while using POST, PATCH, or
+        PUT method"""
+    )
+)
 class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
-    """ViewSet for handling file uploads."""
+    """ViewSet for handling file uploads in content."""
     serializer_class = FileUploadSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
@@ -265,19 +291,47 @@ class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
         if serializer.is_valid():
             file = serializer.validated_data['file']
             # Generate a unique file name
-            filename = get_random_string(length=32) + os.path.splitext(file.name)[1]
+            filename = get_random_string(length=32) + \
+                os.path.splitext(file.name)[1]
             # Path relative to MEDIA_ROOT
             file_path = os.path.join('uploads', 'contentFiles', filename)
             # Use custom storage to save the file
             custom_storage = CustomStorage()
-            saved_path = custom_storage.save(file_path, ContentFile(file.read()))
+            saved_path = custom_storage.save(file_path,
+                                             ContentFile(file.read()))
             # Construct the URL for the uploaded file
             file_url = custom_storage.url(saved_path)
 
-            return Response({'url': file_url, 'uploaded': True}, status=status.HTTP_201_CREATED)
+            return Response({'url': file_url, 'uploaded': True},
+                            status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['POST'], detail=False, url_path='upload')
     def upload_file(self, request):
         return self.create(request)
+
+
+# class PostRateListCreateView(mixins.ListModelMixin):
+#     queryset = PostRate.objects.all()
+#     serializer_class = serializers.PostRateSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
+
+
+# class PostRateRetrieveUpdateDestroyView(mixins.RetrieveModelMixin):
+#     queryset = PostRate.objects.all()
+#     serializer_class = serializers.PostRateSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get_object(self):
+#         queryset = self.get_queryset()
+#         obj = queryset.filter(user=self.request.user, post=self.kwargs['post_pk']).first()
+#         return obj
+
+#     def retrieve(self, request, *args, **kwargs):
+#         instance = self.get_object()
+#         serializer = self.get_serializer(instance)
+#         return Response(serializer.data)

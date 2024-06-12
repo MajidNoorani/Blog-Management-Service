@@ -3,7 +3,8 @@ from core.models import (
     PostCategory,
     Post,
     Tag,
-    SEOKeywords
+    SEOKeywords,
+    PostRate
 )
 
 
@@ -83,15 +84,27 @@ class SEOKeywordsSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class RelatedPostsSerializer(serializers.ModelSerializer):
+    """Serializer for relatedposts"""
+
+    class Meta:
+        model = Post
+        fields = ['id']
+        read_only_fields = ['id']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
-    tags = TagSerializer(many=True, required=False)
+    tags = TagSerializer(
+        many=True,
+        required=False,
+        help_text="""Do not send empty value.
+        It must be a list (even an empty list).""")
 
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
-        allow_null=True,
-        required=False,
-        many=True
+        many=True,
+
     )
 
     class Meta:
@@ -102,7 +115,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'metaDescription', 'readTime', 'relatedPosts',
                   'image', 'updatedDate']
         read_only_fields = ['id', 'reviewStatus']
-        extra_kwargs = {'image': {'required': True}}
+        # extra_kwargs = {'image': {'required': False}}
 
     def _get_or_create_tags(self, tags, post):
         """Handle getting or creating tags as needed."""
@@ -112,6 +125,7 @@ class PostSerializer(serializers.ModelSerializer):
                 defaults={'createdBy': self.context['request'].user,
                           'updatedBy': self.context['request'].user}
             )
+            print('here')
             post.tags.add(tag_obj)
 
     def _get_related_post(self, relatedPosts, post):
@@ -121,17 +135,13 @@ class PostSerializer(serializers.ModelSerializer):
             post.relatedPosts.add(related_post_obj)
 
     def create(self, validated_data):
-        # tags and relatedPosts excluded from validated data
         tags = validated_data.pop('tags', [])
         relatedPosts = validated_data.pop('relatedPosts', [])
-        # content_data = validated_data.pop('content')
         # by default the status of the post is draft
         validated_data['postStatus'] = 'draft'
-        # validated_data['content'] = content_data
-
         post = Post.objects.create(
             **validated_data)
-        # post.content = CustomJsonField(**content_data)
+
         self._get_or_create_tags(tags, post)
         self._get_related_post(relatedPosts, post)
 
@@ -139,6 +149,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         """Update recipe"""
+        if instance.createdBy != self.context['request'].user:
+            raise serializers.ValidationError(
+                "You do not have permission to edit this post.")
         tags = validated_data.pop('tags', None)
         relatedPosts = validated_data.pop('relatedPosts', None)
 
@@ -191,6 +204,12 @@ class PostImageSerializer(serializers.ModelSerializer):
 
 class FileUploadSerializer(serializers.Serializer):
     file = serializers.FileField()
-    # class Meta:
-    #     fields = ['file']
 
+
+class PostRateSerializer(serializers.ModelSerializer):
+    """Serializer for ingredient"""
+
+    class Meta:
+        model = PostRate
+        fields = ['id', 'post', 'user', 'rate']
+        read_only_fields = ['id', 'user']

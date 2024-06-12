@@ -1,14 +1,10 @@
 import os
 from django.conf import settings
-from urllib.parse import urljoin
 from django.core.files.storage import FileSystemStorage
 from django.core.files.base import ContentFile
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
-from .serializers import FileUploadSerializer
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import status
 
 
@@ -22,6 +18,7 @@ class CustomStorage(FileSystemStorage):
 
     location = os.path.join(settings.MEDIA_ROOT, "")
     base_url = settings.MEDIA_URL
+
 
 @csrf_exempt
 def custom_upload_function(request):
@@ -44,6 +41,8 @@ def custom_upload_function(request):
         return JsonResponse({
             'url': file_url,
             'uploaded': True,
+            'status': status.HTTP_201_CREATED
         })
 
-    return JsonResponse({'uploaded': False}, status=400)
+    return JsonResponse({'uploaded': False},
+                        status=status.HTTP_400_BAD_REQUEST)
