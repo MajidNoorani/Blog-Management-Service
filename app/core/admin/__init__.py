@@ -1,0 +1,1 @@
+from . import post_admin, user_admin  # noqa
