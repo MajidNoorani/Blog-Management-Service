@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'core',
     'user',
     'post',
-    # 'django_quill',
+    'comment',
     'django_ckeditor_5',
 ]
 

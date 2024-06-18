@@ -14,10 +14,12 @@ class PostCategorySerializer(serializers.ModelSerializer):
     parentPostCategoryId = serializers.PrimaryKeyRelatedField(
         queryset=PostCategory.objects.all(), allow_null=True, required=False
     )
+    parentPostCategoryTitle = serializers.SerializerMethodField()
 
     class Meta:
         model = PostCategory
-        fields = ['id', 'title', 'parentPostCategoryId', 'description']
+        fields = ['id', 'title', 'parentPostCategoryId',
+                  'parentPostCategoryTitle', 'description']
         read_only_fields = ['id']
 
     def create(self, validated_data):
@@ -29,6 +31,16 @@ class PostCategorySerializer(serializers.ModelSerializer):
             **validated_data)
 
         return postCategory
+
+    def get_parentPostCategoryId(self, obj):
+        if obj.parentPostCategoryId:
+            return obj.parentPostCategoryId.id
+        return None
+
+    def get_parentPostCategoryTitle(self, obj):
+        if obj.parentPostCategoryId:
+            return obj.parentPostCategoryId.title
+        return None
 
     # def update(self, instance, validated_data):
     #     """Update postCategory"""
@@ -207,9 +219,20 @@ class FileUploadSerializer(serializers.Serializer):
 
 
 class PostRateSerializer(serializers.ModelSerializer):
-    """Serializer for ingredient"""
+    """Serializer for post Rate"""
 
     class Meta:
         model = PostRate
-        fields = ['id', 'post', 'user', 'rate']
-        read_only_fields = ['id', 'user']
+        fields = ['id', 'post', 'rate']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        # tags excluded from validated data
+        postRate = PostRate.objects.create(**validated_data)
+        return postRate
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance

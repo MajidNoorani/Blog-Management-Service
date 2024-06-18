@@ -1,9 +1,9 @@
 from django.apps import AppConfig
 
 
-class PostConfig(AppConfig):
+class CommentConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'post'
+    name = 'comment'
 
     def ready(self):
-        import post.signals  # noqa
+        import comment.signals  # noqa
