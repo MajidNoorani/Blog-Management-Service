@@ -86,12 +86,13 @@ class PrivateRecipeAPITests(TestCase):
         """Tests retrieving a list of recipes"""
 
         create_postCategory(user=self.user)
-        create_postCategory(user=self.user, title='Main Category 2 Title')
+        create_postCategory(user=self.user,
+                            title='Main Category 2 Title')
 
         res = self.client.get(POSTCATEGORY_URL)
 
-        recipes = PostCategory.objects.all().order_by('-id')
-        serializer = PostCategorySerializer(recipes, many=True)
+        postCategories = PostCategory.objects.all().order_by('-id')
+        serializer = PostCategorySerializer(postCategories, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data, serializer.data)
@@ -106,27 +107,29 @@ class PrivateRecipeAPITests(TestCase):
         serializer = PostCategoryDetailSerializer(postCategories)
         self.assertEqual(serializer.data, res.data)
 
-    # def test_create_postCategory_with_parent(self):
-    #     """Test creating a postCategory."""
-    #     main_category = create_postCategory(
-    #         user=self.user,
-    #         title='Main Category 2 Title'
-    #         )
-    #     payload = {
-    #         'title': 'Sample Title',
-    #         'description': 'Sample Desc',
-    #         'parentPostCategoryId': main_category.id
-    #     }
+    def test_create_postCategory_with_parent(self):
+        """Test creating a postCategory."""
+        main_category = create_postCategory(
+            user=self.user,
+            title='Main Category 2 Title'
+            )
+        payload = {
+            'title': 'Sample Title',
+            'description': 'Sample Desc',
+            'parentPostCategoryId': main_category.id
+        }
 
-    #     res = self.client.post(POSTCATEGORY_URL, payload)
+        res = self.client.post(POSTCATEGORY_URL, payload)
 
-    #     self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-    #     postCategory = PostCategory.objects.get(id=res.data['id'])
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        postCategory = PostCategory.objects.get(id=res.data['id'])
 
-    #     self.assertEqual(payload['title'], postCategory.title)
-    #     self.assertEqual(payload['description'], postCategory.description)
-    #     print(main_category.title)
-    #     self.assertEqual(main_category.title, postCategory.parentPostCategoryId)
-    #     self.assertEqual(self.user, postCategory.createdBy)
-    #     self.assertEqual(self.user, postCategory.updatedBy)
+        self.assertEqual(postCategory.parentPostCategoryId.id,
+                         main_category.id)
+        self.assertEqual(res.data['parentPostCategoryTitle'],
+                         main_category.title)
 
+        for k, v in payload.items():
+            if k != 'parentPostCategoryId':
+                self.assertEqual(getattr(postCategory, k), v)
+        self.assertEqual(self.user, postCategory.createdBy)

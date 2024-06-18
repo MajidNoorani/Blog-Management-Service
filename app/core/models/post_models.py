@@ -37,7 +37,7 @@ class PostCategory(AuditModel):
                                              related_name='children')
     description = models.TextField(null=True, blank=True)
     image = models.ImageField(null=False,
-                              blank=False,
+                              blank=True,
                               upload_to=blog_category_image_file_path)
     STATUS_CHOICES = [
         ('Active', 'Active'),
@@ -248,7 +248,7 @@ class SEOKeywords(AuditModel):
         return self.keyword
 
 
-class PostAnalytics(models.Model):
+class PostInformation(models.Model):
     """Post Detail objects"""
     post = models.OneToOneField(
         'Post',
@@ -257,14 +257,6 @@ class PostAnalytics(models.Model):
     viewCount = models.PositiveIntegerField(
         help_text="""
         Tracks the number of views or visits the blog post has received.
-        """,
-        null=True,
-        blank=True,
-        default=0
-    )
-    likeCount = models.PositiveIntegerField(
-        help_text="""
-        Records the number of likes or thumbs-up the blog post has received.
         """,
         null=True,
         blank=True,

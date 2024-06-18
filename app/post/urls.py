@@ -17,6 +17,7 @@ router.register('post_category', views.PostCategoryViewSet)
 router.register('post', views.PostViewSet)
 router.register('file-upload', FileUploadViewSet, basename='file-upload')
 router.register('tags', views.TagViewSet)
+router.register('postRate', views.PostRateViewSet)
 
 
 app_name = 'post'
