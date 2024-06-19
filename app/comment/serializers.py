@@ -38,6 +38,13 @@ class CommentSerializer(serializers.ModelSerializer):
         return instance
 
 
+class CommentDetailSerializer(CommentSerializer):
+    """Detail Serializer for Comment"""
+
+    class Meta(CommentSerializer.Meta):
+        pass
+
+
 class CommentReactionSerializer(serializers.ModelSerializer):
     """Serializer for Comment Reactions"""
 
