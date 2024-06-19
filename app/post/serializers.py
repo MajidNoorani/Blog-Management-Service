@@ -4,7 +4,8 @@ from core.models import (
     Post,
     Tag,
     SEOKeywords,
-    PostRate
+    PostRate,
+    PostInformation
 )
 
 
@@ -105,6 +106,13 @@ class RelatedPostsSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class PostInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostInformation
+        fields = ['viewCount', 'socialShareCount', 'ratingCount',
+                  'averageRating', 'commentCount']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(
@@ -115,9 +123,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
-        many=True,
+        many=True)
 
-    )
+    postInformation = PostInformationSerializer(read_only=True)
 
     class Meta:
         model = Post
@@ -125,7 +133,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'postStatus', 'reviewStatus', 'isExternalSource',
                   'externalLink', 'excerpt', 'authorName',
                   'metaDescription', 'readTime', 'relatedPosts',
-                  'image', 'updatedDate']
+                  'image', 'updatedDate', 'postInformation']
         read_only_fields = ['id', 'reviewStatus']
         # extra_kwargs = {'image': {'required': False}}
 

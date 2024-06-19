@@ -14,6 +14,8 @@ from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiTypes
 )
+from rest_framework import status
+from rest_framework.response import Response
 
 
 @extend_schema_view(
@@ -35,18 +37,39 @@ class CommentViewSet(mixins.DestroyModelMixin,
                      mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
     """View for manage comment APIs."""
-    serializer_class = serializers.CommentSerializer
+    serializer_class = serializers.CommentDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Comment.objects.all()
 
     def get_queryset(self):
         """Retrieve comments for the post."""
+        queryset = self.queryset
         post = self.request.query_params.get('post')
-        queryset = self.queryset.filter(
-            post__id=post
-            )
+        if post:
+            queryset = self.queryset.filter(
+                post__id=post
+                )
         return queryset.distinct()
+
+    def get_serializer_class(self):
+        """Return appropriate serializer class based on action."""
+        if self.action == 'list':
+            return serializers.CommentSerializer
+        return self.serializer_class
+
+    def perform_destroy(self, instance):
+        """Destroy a comment by its user"""
+        instance = self.get_object()
+        if instance.user == self.request.user:
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(
+                status=status.HTTP_403_FORBIDDEN,
+                data={
+                    "error":
+                        "You do not have permission to delete this comment."})
 
     def perform_create(self, serializer):
         """Create a new Comment"""

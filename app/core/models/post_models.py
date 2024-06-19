@@ -252,7 +252,8 @@ class PostInformation(models.Model):
     """Post Detail objects"""
     post = models.OneToOneField(
         'Post',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='postInformation'
     )
     viewCount = models.PositiveIntegerField(
         help_text="""
@@ -299,6 +300,14 @@ class PostInformation(models.Model):
         blank=True,
         default=0
     )
+
+    def increment_view_count(self):
+        self.viewCount += 1
+        self.save()
+
+    def increment_social_share_count(self):
+        self.socialShareCount += 1
+        self.save()
 
 
 class PostRate(models.Model):

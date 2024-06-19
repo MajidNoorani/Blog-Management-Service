@@ -25,6 +25,8 @@ from django.utils.crypto import get_random_string
 from django.core.files.base import ContentFile
 from django.http import Http404
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import api_view
+from core.models import PostInformation
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -145,7 +147,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
     serializer_class = serializers.PostDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().select_related('postInformation')
     pagination_class = CustomPageNumberPagination
     # parser_classes = (JSONParser, FormParser)
 
@@ -252,6 +254,18 @@ class PostViewSet(mixins.RetrieveModelMixin,
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['get'])
+    def share_post(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            post_info = PostInformation.objects.get(post=instance)
+            post_info.increment_social_share_count()
+            return Response({'message': 'Social share count incremented successfully'}, status=status.HTTP_200_OK)
+        except PostRate.DoesNotExist:
+            return Response({'error': 'Post rate not found'}, status=status.HTTP_404_NOT_FOUND)
+        except PostInformation.DoesNotExist:
+            return Response({'error': 'Post information not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 @extend_schema_view(
@@ -375,3 +389,17 @@ class PostRateViewSet(mixins.DestroyModelMixin,
     def perform_create(self, serializer):
         """Create a new CommentReaction"""
         serializer.save(user=self.request.user)
+
+
+# @api_view(['POST'])
+# def share_post(request, post_id):
+#     try:
+#         post_info = PostInformation.objects.get(post_id=post_id)
+#         post_info.increment_social_share_count()
+#         return Response(
+#             {'message': 'Social share count incremented successfully'},
+#             status=status.HTTP_200_OK)
+#     except PostInformation.DoesNotExist:
+#         return Response(
+#             {'error': 'Post information not found'},
+#             status=status.HTTP_404_NOT_FOUND)

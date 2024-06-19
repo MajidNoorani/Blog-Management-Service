@@ -292,7 +292,29 @@ class SEOKeywordsAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+class PostInformationAdmin(admin.ModelAdmin):
+    """Define the admin page for postCategories."""
+    # list of postCategories page
+    ordering = ['id']
+    list_display = ['post', 'viewCount', 'socialShareCount',
+                    'ratingCount', 'averageRating', 'commentCount']
+
+    # edit postCategories page
+    fieldsets = (
+        (
+            _('Post Analytics'),
+            {'fields': (
+                'post', 'viewCount', 'socialShareCount', 'ratingCount',
+                'averageRating', 'commentCount'
+                )}
+        ),
+    )
+    readonly_fields = ['post', 'viewCount', 'socialShareCount', 'ratingCount',
+                       'averageRating', 'commentCount']
+
+
 admin.site.register(models.Tag, TagAdmin)
 admin.site.register(models.SEOKeywords, SEOKeywordsAdmin)
 admin.site.register(models.PostCategory, PostCategoryAdmin)
 admin.site.register(models.Post, PostAdmin)
+admin.site.register(models.PostInformation, PostInformationAdmin)
