@@ -35,6 +35,7 @@ urlpatterns = [
         ),
     path('api/user/', include('user.urls')),
     path('api/post/', include('post.urls')),
+    path('api/comment/', include('comment.urls')),
     path("ckeditor5/", include('django_ckeditor_5.urls')),
 ]
 

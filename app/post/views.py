@@ -24,6 +24,9 @@ from post.serializers import FileUploadSerializer
 from django.utils.crypto import get_random_string
 from django.core.files.base import ContentFile
 from django.http import Http404
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import api_view
+from core.models import PostInformation
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -36,6 +39,12 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = PostCategory.objects.all()
+
+    def get_permissions(self):
+        """Allow unauthenticated access to GET requests."""
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Retrieve postCategories."""
@@ -138,9 +147,15 @@ class PostViewSet(mixins.RetrieveModelMixin,
     serializer_class = serializers.PostDetailSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Post.objects.all()
+    queryset = Post.objects.all().select_related('postInformation')
     pagination_class = CustomPageNumberPagination
     # parser_classes = (JSONParser, FormParser)
+
+    def get_permissions(self):
+        """Allow unauthenticated access to GET requests."""
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
     def get_allowed_methods(self):
         methods = super().get_allowed_methods()
@@ -163,6 +178,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
         if self.action == 'upload_image':
             return self.queryset.filter(createdBy=self.request.user)
 
+        user = self.request.user
         tags = self.request.query_params.get('tags')
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
@@ -182,23 +198,28 @@ class PostViewSet(mixins.RetrieveModelMixin,
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
         if currentUserPosts:
-            user = self.request.user
-            queryset = queryset.filter(createdBy=user)
-            return queryset.order_by('-createdDate').distinct()
-
-        # all the posts created by current user will be returned
-        # no matter they are published or not or accepted
-        queryset_current_user = queryset.filter(
-            createdBy=self.request.user)
+            if user.is_authenticated:
+                queryset = queryset.filter(createdBy=user)
+                return queryset.order_by('-createdDate').distinct()
+            else:
+                raise PermissionDenied('User is not authenticated')
 
         queryset.filter(
             reviewStatus='accept',
             postStatus='publish')
 
-        combined_queryset = (
-            queryset_current_user | queryset
-            ).distinct().order_by('-createdDate')
-        return combined_queryset
+        # all the posts created by current user will be returned
+        # no matter they are published or not or accepted
+        if user.is_authenticated:
+            queryset_current_user = queryset.filter(
+                createdBy=user)
+
+            combined_queryset = (
+                queryset_current_user | queryset
+                ).distinct().order_by('-createdDate')
+            return combined_queryset
+
+        return queryset.distinct().order_by('-createdDate')
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -234,6 +255,18 @@ class PostViewSet(mixins.RetrieveModelMixin,
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['get'])
+    def share_post(self, request, pk=None):
+        try:
+            instance = self.get_object()
+            post_info = PostInformation.objects.get(post=instance)
+            post_info.increment_social_share_count()
+            return Response({'message': 'Social share count incremented successfully'}, status=status.HTTP_200_OK)
+        except PostRate.DoesNotExist:
+            return Response({'error': 'Post rate not found'}, status=status.HTTP_404_NOT_FOUND)
+        except PostInformation.DoesNotExist:
+            return Response({'error': 'Post information not found'}, status=status.HTTP_404_NOT_FOUND)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -246,9 +279,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
         ]
     )
 )
-class BasePostAttrViewSet(mixins.DestroyModelMixin,
-                          mixins.UpdateModelMixin,
-                          mixins.ListModelMixin,
+class BasePostAttrViewSet(mixins.ListModelMixin,
                           viewsets.GenericViewSet):
     """Base viewset for post attributes."""
     authentication_classes = [TokenAuthentication]
@@ -271,6 +302,12 @@ class TagViewSet(BasePostAttrViewSet):
     # order of inputs is important
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
+
+    def get_permissions(self):
+        """Allow unauthenticated access to GET requests."""
+        if self.request.method in permissions.SAFE_METHODS:
+            return [permissions.AllowAny()]
+        return super().get_permissions()
 
 
 @extend_schema_view(
@@ -312,26 +349,57 @@ class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
         return self.create(request)
 
 
-# class PostRateListCreateView(mixins.ListModelMixin):
-#     queryset = PostRate.objects.all()
-#     serializer_class = serializers.PostRateSerializer
-#     permission_classes = [permissions.IsAuthenticated]
+@extend_schema_view(
+    list=extend_schema(
+        description="""
+        Retrieve all reactions of the current user
+        to all the comments of the specified post.
+        """,
+        parameters=[
+            OpenApiParameter(
+                'post',
+                OpenApiTypes.INT,
+                required=True
+            ),
+        ]
+    )
+)
+class PostRateViewSet(mixins.DestroyModelMixin,
+                      mixins.UpdateModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.ListModelMixin,
+                      viewsets.GenericViewSet):
+    """View for manage postRate APIs."""
 
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
+    serializer_class = serializers.PostRateSerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = PostRate.objects.all()
+
+    def get_queryset(self):
+        """Retrieve comment reactions for authenticated user."""
+        post = self.request.query_params.get('post')
+        queryset = self.queryset
+        if post:
+            queryset.filter(
+                post__id=post
+                )
+        return queryset.distinct()
+
+    def perform_create(self, serializer):
+        """Create a new CommentReaction"""
+        serializer.save(user=self.request.user)
 
 
-# class PostRateRetrieveUpdateDestroyView(mixins.RetrieveModelMixin):
-#     queryset = PostRate.objects.all()
-#     serializer_class = serializers.PostRateSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-
-#     def get_object(self):
-#         queryset = self.get_queryset()
-#         obj = queryset.filter(user=self.request.user, post=self.kwargs['post_pk']).first()
-#         return obj
-
-#     def retrieve(self, request, *args, **kwargs):
-#         instance = self.get_object()
-#         serializer = self.get_serializer(instance)
-#         return Response(serializer.data)
+# @api_view(['POST'])
+# def share_post(request, post_id):
+#     try:
+#         post_info = PostInformation.objects.get(post_id=post_id)
+#         post_info.increment_social_share_count()
+#         return Response(
+#             {'message': 'Social share count incremented successfully'},
+#             status=status.HTTP_200_OK)
+#     except PostInformation.DoesNotExist:
+#         return Response(
+#             {'error': 'Post information not found'},
+#             status=status.HTTP_404_NOT_FOUND)

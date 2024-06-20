@@ -37,7 +37,8 @@ class PostCategory(AuditModel):
                                              related_name='children')
     description = models.TextField(null=True, blank=True)
     image = models.ImageField(null=False,
-                              blank=False,
+                              blank=True,
+                              default="",
                               upload_to=blog_category_image_file_path)
     STATUS_CHOICES = [
         ('Active', 'Active'),
@@ -89,6 +90,7 @@ class Post(AuditModel):
         null=True,
         blank=True,
         upload_to=post_image_file_path,
+        default="",
         verbose_name="Post Image")
     authorName = models.CharField(
         verbose_name="Author Name",
@@ -159,6 +161,7 @@ class Post(AuditModel):
         max_length=255,
         null=False,
         blank=False,
+        default="",
         verbose_name="Excerpt",
         help_text="""
         Provides a short summary or teaser of the blog post,
@@ -248,23 +251,16 @@ class SEOKeywords(AuditModel):
         return self.keyword
 
 
-class PostAnalytics(models.Model):
+class PostInformation(models.Model):
     """Post Detail objects"""
     post = models.OneToOneField(
         'Post',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='postInformation'
     )
     viewCount = models.PositiveIntegerField(
         help_text="""
         Tracks the number of views or visits the blog post has received.
-        """,
-        null=True,
-        blank=True,
-        default=0
-    )
-    likeCount = models.PositiveIntegerField(
-        help_text="""
-        Records the number of likes or thumbs-up the blog post has received.
         """,
         null=True,
         blank=True,
@@ -307,6 +303,14 @@ class PostAnalytics(models.Model):
         blank=True,
         default=0
     )
+
+    def increment_view_count(self):
+        self.viewCount += 1
+        self.save()
+
+    def increment_social_share_count(self):
+        self.socialShareCount += 1
+        self.save()
 
 
 class PostRate(models.Model):

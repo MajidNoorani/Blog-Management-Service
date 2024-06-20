@@ -4,7 +4,8 @@ from core.models import (
     Post,
     Tag,
     SEOKeywords,
-    PostRate
+    PostRate,
+    PostInformation
 )
 
 
@@ -14,10 +15,12 @@ class PostCategorySerializer(serializers.ModelSerializer):
     parentPostCategoryId = serializers.PrimaryKeyRelatedField(
         queryset=PostCategory.objects.all(), allow_null=True, required=False
     )
+    parentPostCategoryTitle = serializers.SerializerMethodField()
 
     class Meta:
         model = PostCategory
-        fields = ['id', 'title', 'parentPostCategoryId', 'description']
+        fields = ['id', 'title', 'parentPostCategoryId',
+                  'parentPostCategoryTitle', 'description']
         read_only_fields = ['id']
 
     def create(self, validated_data):
@@ -29,6 +32,16 @@ class PostCategorySerializer(serializers.ModelSerializer):
             **validated_data)
 
         return postCategory
+
+    def get_parentPostCategoryId(self, obj):
+        if obj.parentPostCategoryId:
+            return obj.parentPostCategoryId.id
+        return None
+
+    def get_parentPostCategoryTitle(self, obj):
+        if obj.parentPostCategoryId:
+            return obj.parentPostCategoryId.title
+        return None
 
     # def update(self, instance, validated_data):
     #     """Update postCategory"""
@@ -93,6 +106,13 @@ class RelatedPostsSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class PostInformationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostInformation
+        fields = ['viewCount', 'socialShareCount', 'ratingCount',
+                  'averageRating', 'commentCount']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(
@@ -103,9 +123,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     relatedPosts = serializers.PrimaryKeyRelatedField(
         queryset=Post.objects.all(),
-        many=True,
+        many=True)
 
-    )
+    postInformation = PostInformationSerializer(read_only=True)
 
     class Meta:
         model = Post
@@ -113,7 +133,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'postStatus', 'reviewStatus', 'isExternalSource',
                   'externalLink', 'excerpt', 'authorName',
                   'metaDescription', 'readTime', 'relatedPosts',
-                  'image', 'updatedDate']
+                  'image', 'updatedDate', 'postInformation']
         read_only_fields = ['id', 'reviewStatus']
         # extra_kwargs = {'image': {'required': False}}
 
@@ -207,9 +227,20 @@ class FileUploadSerializer(serializers.Serializer):
 
 
 class PostRateSerializer(serializers.ModelSerializer):
-    """Serializer for ingredient"""
+    """Serializer for post Rate"""
 
     class Meta:
         model = PostRate
-        fields = ['id', 'post', 'user', 'rate']
-        read_only_fields = ['id', 'user']
+        fields = ['id', 'post', 'rate']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        # tags excluded from validated data
+        postRate = PostRate.objects.create(**validated_data)
+        return postRate
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
