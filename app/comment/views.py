@@ -65,11 +65,17 @@ class CommentViewSet(mixins.DestroyModelMixin,
             instance.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response(
-                status=status.HTTP_403_FORBIDDEN,
-                data={
-                    "error":
-                        "You do not have permission to delete this comment."})
+            raise PermissionDenied(
+                "You do not have permission to delete this comment.")
+    
+    def perform_update(self, serializer):
+        """Destroy a comment by its user"""
+        instance = self.get_object()
+        if instance.user == self.request.user:
+            serializer.save()
+        else:
+            raise PermissionDenied(
+                "You do not have permission to update this comment.")
 
     def perform_create(self, serializer):
         """Create a new Comment"""
