@@ -38,6 +38,7 @@ class PostCategory(AuditModel):
     description = models.TextField(null=True, blank=True)
     image = models.ImageField(null=False,
                               blank=True,
+                              default="",
                               upload_to=blog_category_image_file_path)
     STATUS_CHOICES = [
         ('Active', 'Active'),
@@ -89,6 +90,7 @@ class Post(AuditModel):
         null=True,
         blank=True,
         upload_to=post_image_file_path,
+        default="",
         verbose_name="Post Image")
     authorName = models.CharField(
         verbose_name="Author Name",
@@ -159,6 +161,7 @@ class Post(AuditModel):
         max_length=255,
         null=False,
         blank=False,
+        default="",
         verbose_name="Excerpt",
         help_text="""
         Provides a short summary or teaser of the blog post,
