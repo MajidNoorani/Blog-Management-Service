@@ -16,6 +16,13 @@
 ```
 if you get the version of docker compose, everything is ok
 
+## Clone the codes
+
+```
+1. git clone git@tiva-git.ir:tiva/blog-service.git
+2. git checkout master
+```
+
 ## Deploy
 for run and deploy the code. first put a **.env** file in the directory like [.env.example](.env.example)
 
