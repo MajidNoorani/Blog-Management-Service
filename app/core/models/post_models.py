@@ -9,6 +9,7 @@ from django_ckeditor_5.fields import CKEditor5Field
 from ._base_models import AuditModel
 from django.conf import settings
 from django.core.validators import MaxValueValidator
+from django.core.exceptions import ValidationError
 
 
 def blog_category_image_file_path(instance, filename):
@@ -87,7 +88,7 @@ class Post(AuditModel):
         on_delete=models.RESTRICT
         )
     image = models.ImageField(
-        null=True,
+        null=False,
         blank=True,
         upload_to=post_image_file_path,
         default="",
@@ -96,8 +97,7 @@ class Post(AuditModel):
         verbose_name="Author Name",
         max_length=100,
         null=False,
-        blank=False,
-        default="Unknown"
+        blank=False
     )
     tags = models.ManyToManyField(
         'Tag',
@@ -126,7 +126,8 @@ class Post(AuditModel):
         verbose_name="Review Response Date"
         )
     isExternalSource = models.BooleanField(
-        verbose_name="Is External Source", default=False)
+        verbose_name="Is External Source",
+        default=False)
     externalLink = models.CharField(
         max_length=255,
         null=True,
@@ -161,7 +162,6 @@ class Post(AuditModel):
         max_length=255,
         null=False,
         blank=False,
-        default="",
         verbose_name="Excerpt",
         help_text="""
         Provides a short summary or teaser of the blog post,
@@ -222,6 +222,12 @@ class Post(AuditModel):
                 {self.reviewStatus} to {new_status}
                 """
                 )
+
+    def clean(self):
+        super().clean()
+        if self.isExternalSource and not self.externalLink:
+            raise ValidationError(
+                "External link must be provided for posts from external sources.")  # noqa
 
     def __str__(self):
         return self.title

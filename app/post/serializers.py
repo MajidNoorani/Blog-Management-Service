@@ -20,8 +20,10 @@ class PostCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PostCategory
         fields = ['id', 'title', 'parentPostCategoryId',
-                  'parentPostCategoryTitle', 'description']
+                  'parentPostCategoryTitle', 'description',
+                  'image']
         read_only_fields = ['id']
+        extra_kwargs = {'image': {'required': False}}
 
     def create(self, validated_data):
         """Create postCategory"""
@@ -58,7 +60,6 @@ class PostCategoryDetailSerializer(PostCategorySerializer):
 
     class Meta(PostCategorySerializer.Meta):
         fields = PostCategorySerializer.Meta.fields + [
-            'image',
             'createdBy',
             'createdDate',
             'updatedBy',
@@ -135,7 +136,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'metaDescription', 'readTime', 'relatedPosts',
                   'image', 'updatedDate', 'postInformation']
         read_only_fields = ['id', 'reviewStatus']
-        # extra_kwargs = {'image': {'required': False}}
+        extra_kwargs = {'image': {'required': False}}
 
     def _get_or_create_tags(self, tags, post):
         """Handle getting or creating tags as needed."""
@@ -190,6 +191,12 @@ class PostSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
+
+    def validate(self, data):
+        if data.get('isExternalSource') and not data.get('externalLink'):
+            raise serializers.ValidationError(
+                "External link must be provided for posts from external sources.")  # noqa
+        return data
 
 
 class PostDetailSerializer(PostSerializer):
