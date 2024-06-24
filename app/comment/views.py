@@ -4,7 +4,7 @@ from rest_framework import (
     permissions,
     viewsets,
     mixins,
-    # status
+    status
 )
 
 from core.models import Comment, CommentReaction
@@ -14,8 +14,8 @@ from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiTypes
 )
-from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError, PermissionDenied
 
 
 @extend_schema_view(
@@ -67,7 +67,7 @@ class CommentViewSet(mixins.DestroyModelMixin,
         else:
             raise PermissionDenied(
                 "You do not have permission to delete this comment.")
-    
+
     def perform_update(self, serializer):
         """Destroy a comment by its user"""
         instance = self.get_object()
@@ -119,10 +119,23 @@ class CommentReactionViewSet(mixins.DestroyModelMixin,
         comment = self.request.query_params.get('comment')
         queryset = self.queryset.filter(user=self.request.user)
         if comment:
-            queryset.filter(
+            queryset = queryset.filter(
                 comment__id=comment
                 )
         return queryset.distinct()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            )
+        except ValidationError as e:
+            return Response(
+                {'detail': str(dict(e.detail)['non_field_errors'][0])},
+                status=status.HTTP_409_CONFLICT)
 
     def perform_create(self, serializer):
         """Create a new CommentReaction"""

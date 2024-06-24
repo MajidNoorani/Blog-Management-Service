@@ -48,14 +48,22 @@ class CommentDetailSerializer(CommentSerializer):
 class CommentReactionSerializer(serializers.ModelSerializer):
     """Serializer for Comment Reactions"""
 
+    def validate(self, data):
+        user = self.context['request'].user
+        comment = data['comment']
+        if CommentReaction.objects.filter(user=user, comment=comment).exists():
+            raise serializers.ValidationError(
+                "Comment reaction already exists for this user and comment.")
+        return data
+
     class Meta:
         model = CommentReaction
         fields = ['id', 'reaction', 'comment']
         read_only_fields = ['id']
 
     def create(self, validated_data):
-        # tags excluded from validated data
-        commentReaction = CommentReaction.objects.create(**validated_data)
+        commentReaction = CommentReaction.objects.create(
+            **validated_data)
         return commentReaction
 
     def update(self, instance, validated_data):
