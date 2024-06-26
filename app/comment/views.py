@@ -37,7 +37,7 @@ class CommentViewSet(mixins.DestroyModelMixin,
                      mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
     """View for manage comment APIs."""
-    serializer_class = serializers.CommentDetailSerializer
+    serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Comment.objects.all()
@@ -134,7 +134,7 @@ class CommentReactionViewSet(mixins.DestroyModelMixin,
                             )
         except ValidationError as e:
             return Response(
-                {'detail': str(dict(e.detail)['non_field_errors'][0])},
+                {'detail': str(dict(e.detail))},
                 status=status.HTTP_409_CONFLICT)
 
     def perform_create(self, serializer):
