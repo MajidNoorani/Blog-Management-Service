@@ -1,19 +1,29 @@
 from rest_framework import serializers
 from core.models import (
     Comment,
-    CommentReaction
+    CommentReaction,
+    User
 )
+
+
+class CommentUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name']
 
 
 class CommentSerializer(serializers.ModelSerializer):
     """Serializer for Comment Reactions"""
 
     currentUserReaction = serializers.SerializerMethodField()
+    createdByCurrentUser = serializers.SerializerMethodField()
+    user = CommentUserSerializer(read_only=True)
 
     class Meta:
         model = Comment
         fields = ['id', 'post', 'comment', 'parentComment',
-                  'likeCount', 'disLikeCount', 'currentUserReaction']
+                  'likeCount', 'disLikeCount', 'createdByCurrentUser',
+                  'currentUserReaction', 'user']
         read_only_fields = ['id', 'likeCount', 'disLikeCount']
 
     def get_currentUserReaction(self, obj):
@@ -25,6 +35,12 @@ class CommentSerializer(serializers.ModelSerializer):
             if reaction:
                 return CommentReactionSerializer(reaction).data
         return None
+
+    def get_createdByCurrentUser(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated and obj:
+            return obj.user == user
+        return False
 
     def create(self, validated_data):
         # tags excluded from validated data
@@ -38,22 +54,32 @@ class CommentSerializer(serializers.ModelSerializer):
         return instance
 
 
-class CommentDetailSerializer(CommentSerializer):
-    """Detail Serializer for Comment"""
-
-    class Meta(CommentSerializer.Meta):
-        pass
-
-
 class CommentReactionSerializer(serializers.ModelSerializer):
     """Serializer for Comment Reactions"""
 
     def validate(self, data):
-        user = self.context['request'].user
-        comment = data['comment']
-        if CommentReaction.objects.filter(user=user, comment=comment).exists():
-            raise serializers.ValidationError(
-                "Comment reaction already exists for this user and comment.")
+        request = self.context.get('request')
+        user = request.user
+        comment = data.get('comment')
+
+        # Check if we are updating an instance
+        instance = self.instance
+
+        if instance is None:
+            # Only check for uniqueness on creation
+            if CommentReaction.objects.filter(
+                user=user,
+                comment=comment).exists():
+                raise serializers.ValidationError(
+                    "Comment reaction already exists for this user and comment.")
+        else:
+            # If updating, ensure not changing to a duplicate of another record
+            if CommentReaction.objects.filter(
+                user=user,
+                comment=comment).exclude(pk=instance.pk).exists():
+                raise serializers.ValidationError(
+                    "Comment reaction already exists for this user and comment.")
+
         return data
 
     class Meta:
