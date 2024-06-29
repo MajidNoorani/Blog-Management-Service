@@ -9,7 +9,7 @@ COPY ./requirements.dev.txt /tmp/requirements.dev.txt
 COPY ./scripts /scripts
 COPY ./app /app
 WORKDIR /app
-EXPOSE 8013
+EXPOSE 8015
 
 ARG DEV=false
 RUN python -m venv /py && \
