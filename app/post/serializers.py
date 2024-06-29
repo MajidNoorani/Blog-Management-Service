@@ -45,14 +45,16 @@ class PostCategorySerializer(serializers.ModelSerializer):
             return obj.parentPostCategoryId.title
         return None
 
-    # def update(self, instance, validated_data):
-    #     """Update postCategory"""
-    #     validated_data['title'] = validated_data['title'].title()
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
+    def update(self, instance, validated_data):
+        """Update postCategory"""
+        if instance.createdBy != self.context['request'].user:
+            raise serializers.ValidationError(
+                "You do not have permission to edit this postCategory.")
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
-    #     instance.save()
-    #     return instance
+        instance.save()
+        return instance
 
 
 class PostCategoryDetailSerializer(PostCategorySerializer):
@@ -122,12 +124,30 @@ class PostRateSerializer(serializers.ModelSerializer):
         fields = ['id', 'post', 'rate']
         read_only_fields = ['id']
 
+    def validate(self, data):
+        request = self.context.get('request')
+        user = request.user
+        post = data.get('post')
+
+        # Check if we are updating an instance
+        instance = self.instance
+
+        if instance is None:
+            # Only check for uniqueness on creation
+            if PostRate.objects.filter(user=user, post=post).exists():
+                raise serializers.ValidationError(
+                    "Current user already rated this post.")
+        return data
+
     def create(self, validated_data):
-        # tags excluded from validated data
         postRate = PostRate.objects.create(**validated_data)
         return postRate
 
     def update(self, instance, validated_data):
+        if instance.user != self.context['request'].user:
+            raise serializers.ValidationError(
+                "You do not have permission to edit this Post Rate.")
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -147,7 +167,7 @@ class PostSerializer(serializers.ModelSerializer):
         many=True)
 
     postInformation = PostInformationSerializer(read_only=True)
-    currentUserPostRate =serializers.SerializerMethodField()
+    currentUserPostRate = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -201,7 +221,7 @@ class PostSerializer(serializers.ModelSerializer):
         return post
 
     def update(self, instance, validated_data):
-        """Update recipe"""
+        """Update post"""
         if instance.createdBy != self.context['request'].user:
             raise serializers.ValidationError(
                 "You do not have permission to edit this post.")

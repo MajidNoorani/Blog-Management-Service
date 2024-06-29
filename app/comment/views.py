@@ -140,3 +140,12 @@ class CommentReactionViewSet(mixins.DestroyModelMixin,
     def perform_create(self, serializer):
         """Create a new CommentReaction"""
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """Destroy a comment by its user"""
+        instance = self.get_object()
+        if instance.user == self.request.user:
+            serializer.save()
+        else:
+            raise PermissionDenied(
+                "You do not have permission to update this reaction.")
