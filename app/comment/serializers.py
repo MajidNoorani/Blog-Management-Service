@@ -67,18 +67,11 @@ class CommentReactionSerializer(serializers.ModelSerializer):
 
         if instance is None:
             # Only check for uniqueness on creation
-            if CommentReaction.objects.filter(
-                user=user,
-                comment=comment).exists():
+            if CommentReaction.objects.filter(user=user,
+                                              comment=comment
+                                              ).exists():
                 raise serializers.ValidationError(
-                    "Comment reaction already exists for this user and comment.")
-        else:
-            # If updating, ensure not changing to a duplicate of another record
-            if CommentReaction.objects.filter(
-                user=user,
-                comment=comment).exclude(pk=instance.pk).exists():
-                raise serializers.ValidationError(
-                    "Comment reaction already exists for this user and comment.")
+                    "Current user has already put a reaction on this comment.")
 
         return data
 
@@ -93,6 +86,10 @@ class CommentReactionSerializer(serializers.ModelSerializer):
         return commentReaction
 
     def update(self, instance, validated_data):
+        if instance.user != self.context['request'].user:
+            raise serializers.ValidationError(
+                "You do not have permission to edit this comment reaction.")
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
