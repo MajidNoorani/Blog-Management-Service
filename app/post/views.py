@@ -24,9 +24,13 @@ from post.serializers import FileUploadSerializer
 from django.utils.crypto import get_random_string
 from django.core.files.base import ContentFile
 from django.http import Http404
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.decorators import api_view
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from core.models import PostInformation
+from rest_framework.parsers import (
+    # JSONParser,
+    # FormParser,
+    MultiPartParser
+)
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -35,7 +39,7 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
                           mixins.ListModelMixin,
                           viewsets.GenericViewSet):
     """View for manage recipe APIs."""
-    serializer_class = serializers.PostCategoryDetailSerializer
+    serializer_class = serializers.PostCategorySerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = PostCategory.objects.all()
@@ -54,6 +58,8 @@ class PostCategoryViewSet(mixins.RetrieveModelMixin,
     def get_serializer_class(self):
         if self.action == 'list':
             return serializers.PostCategorySerializer
+        elif self.action == 'retrieve':
+            return serializers.PostCategoryDetailSerializer
         elif self.action == 'upload_image':
             return serializers.PostCategoryImageSerializer
 
@@ -130,13 +136,6 @@ class CustomPageNumberPagination(PageNumberPagination):
             ),
         ]
     )
-    # create=extend_schema(
-    #     request={
-    #         'application/json': serializers.PostDetailSerializer
-    #     },
-    #     responses={201: serializers.PostDetailSerializer},
-    #     description="Create a post"
-    # ),
 )
 class PostViewSet(mixins.RetrieveModelMixin,
                   mixins.UpdateModelMixin,
@@ -229,6 +228,19 @@ class PostViewSet(mixins.RetrieveModelMixin,
 
         return self.serializer_class
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            )
+        except ValidationError as e:
+            return Response(
+                {'detail': str(dict(e.detail)['non_field_errors'][0])},
+                status=status.HTTP_400_BAD_REQUEST)
+
     def perform_create(self, serializer):
         """Create a new post"""
         serializer.save(createdBy=self.request.user,
@@ -236,7 +248,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
                         updatedDate=timezone.now(),
                         createdDate=timezone.now())
 
-    @action(methods=['POST'], detail=True, url_path='upload-image')
+    @action(methods=['POST'], detail=True, url_path='upload-image',
+            parser_classes=[MultiPartParser])
     def upload_image(self, request, pk=None):
         """Upload an image to post."""
         try:
@@ -261,11 +274,17 @@ class PostViewSet(mixins.RetrieveModelMixin,
             instance = self.get_object()
             post_info = PostInformation.objects.get(post=instance)
             post_info.increment_social_share_count()
-            return Response({'message': 'Social share count incremented successfully'}, status=status.HTTP_200_OK)
+            return Response(
+                {'message': 'Social share count incremented successfully'},
+                status=status.HTTP_200_OK)
         except PostRate.DoesNotExist:
-            return Response({'error': 'Post rate not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'Post rate not found'},
+                status=status.HTTP_404_NOT_FOUND)
         except PostInformation.DoesNotExist:
-            return Response({'error': 'Post information not found'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'error': 'Post information not found'},
+                status=status.HTTP_404_NOT_FOUND)
 
 
 @extend_schema_view(
@@ -389,17 +408,3 @@ class PostRateViewSet(mixins.DestroyModelMixin,
     def perform_create(self, serializer):
         """Create a new CommentReaction"""
         serializer.save(user=self.request.user)
-
-
-# @api_view(['POST'])
-# def share_post(request, post_id):
-#     try:
-#         post_info = PostInformation.objects.get(post_id=post_id)
-#         post_info.increment_social_share_count()
-#         return Response(
-#             {'message': 'Social share count incremented successfully'},
-#             status=status.HTTP_200_OK)
-#     except PostInformation.DoesNotExist:
-#         return Response(
-#             {'error': 'Post information not found'},
-#             status=status.HTTP_404_NOT_FOUND)

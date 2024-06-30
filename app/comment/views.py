@@ -4,7 +4,7 @@ from rest_framework import (
     permissions,
     viewsets,
     mixins,
-    # status
+    status
 )
 
 from core.models import Comment, CommentReaction
@@ -14,9 +14,8 @@ from drf_spectacular.utils import (
     OpenApiParameter,
     OpenApiTypes
 )
-from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db.models import F
 
 
@@ -39,7 +38,7 @@ class CommentViewSet(mixins.DestroyModelMixin,
                      mixins.CreateModelMixin,
                      viewsets.GenericViewSet):
     """View for manage comment APIs."""
-    serializer_class = serializers.CommentDetailSerializer
+    serializer_class = serializers.CommentSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Comment.objects.all()
@@ -124,11 +123,33 @@ class CommentReactionViewSet(mixins.DestroyModelMixin,
         comment = self.request.query_params.get('comment')
         queryset = self.queryset.filter(user=self.request.user)
         if comment:
-            queryset.filter(
+            queryset = queryset.filter(
                 comment__id=comment
                 )
         return queryset.distinct()
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            )
+        except ValidationError as e:
+            return Response(
+                {'detail': str(dict(e.detail))},
+                status=status.HTTP_409_CONFLICT)
+
     def perform_create(self, serializer):
         """Create a new CommentReaction"""
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """Destroy a comment by its user"""
+        instance = self.get_object()
+        if instance.user == self.request.user:
+            serializer.save()
+        else:
+            raise PermissionDenied(
+                "You do not have permission to update this reaction.")

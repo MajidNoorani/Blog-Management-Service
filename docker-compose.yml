@@ -9,14 +9,14 @@ services:
       args:
         - DEV=true
     ports:
-      - "8013:8013" # maps the port of current machine to the port of container
+      - "8015:8015" # maps the port of current machine to the port of container
     volumes:
       - ./app:/app # this helps to reflect any changes in code to container (wirthout re-building)
       - blog-static-data:/vol/web
     command: >
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8013"
+             python manage.py runserver 0.0.0.0:8015"
     environment:
       - DB_HOST=db
       - DB_NAME=${DB_NAME}
