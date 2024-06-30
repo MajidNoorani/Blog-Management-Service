@@ -49,8 +49,8 @@ INSTALLED_APPS = [
     'core',
     'user',
     'post',
-    # 'django_quill',
     'django_ckeditor_5',
+    'comment'
 ]
 
 MIDDLEWARE = [
