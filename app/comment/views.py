@@ -16,6 +16,8 @@ from drf_spectacular.utils import (
 )
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
+from django.db.models import F
 
 
 @extend_schema_view(
@@ -50,6 +52,9 @@ class CommentViewSet(mixins.DestroyModelMixin,
             queryset = self.queryset.filter(
                 post__id=post
                 )
+            queryset = queryset.annotate(
+                popularity=F('likeCount') + F('disLikeCount')
+            ).order_by('-popularity', '-id')
         return queryset.distinct()
 
     def get_serializer_class(self):
@@ -67,7 +72,7 @@ class CommentViewSet(mixins.DestroyModelMixin,
         else:
             raise PermissionDenied(
                 "You do not have permission to delete this comment.")
-    
+
     def perform_update(self, serializer):
         """Destroy a comment by its user"""
         instance = self.get_object()
