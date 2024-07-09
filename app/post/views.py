@@ -215,7 +215,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
             queryset = queryset.filter(createdDate__range=createdDate_rage)
         if currentUserPosts:
             if user.is_authenticated:
-                queryset = queryset.filter(createdBy=user)
+                queryset = queryset.filter(createdBy=user,
+                                           postStatus__in=['publish', 'draft'])
                 return queryset.order_by('-createdDate').distinct()
             else:
                 raise PermissionDenied('User is not authenticated')
@@ -252,14 +253,15 @@ class PostViewSet(mixins.RetrieveModelMixin,
 
         # all the posts created by current user will be returned
         # no matter they are published or not or accepted
-        # if user.is_authenticated:
-        #     queryset_current_user = self.queryset.filter(
-        #         createdBy=user)
+        if user.is_authenticated:
+            queryset_current_user = self.queryset.filter(
+                createdBy=user,
+                postStatus__in=['draft']).distinct()
 
-        #     combined_queryset = (
-        #         queryset_current_user | queryset
-        #         ).distinct().order_by('-createdDate')
-        #     return combined_queryset
+            combined_queryset = (
+                queryset_current_user | queryset
+                ).distinct().order_by('-createdDate')
+            return combined_queryset.distinct()
         return queryset
 
     def get_serializer_class(self):
@@ -289,6 +291,34 @@ class PostViewSet(mixins.RetrieveModelMixin,
                         updatedBy=self.request.user,
                         updatedDate=timezone.now(),
                         createdDate=timezone.now())
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        print(request.data)
+        serializer = self.get_serializer(instance,
+                                         data=request.data,
+                                         partial=partial)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            )
+        except ValidationError as e:
+            return Response(
+                {'detail': str(dict(e.detail))},
+                status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_update(self, serializer):
+        """Create a new post"""
+        instance = self.get_object()
+        if instance.createdBy == self.request.user:
+            serializer.save(updatedBy=self.request.user,
+                            updatedDate=timezone.now())
+        else:
+            raise PermissionDenied(
+                "You do not have permission to update this comment.")
 
     @action(methods=['POST'], detail=True, url_path='upload-image',
             parser_classes=[MultiPartParser])

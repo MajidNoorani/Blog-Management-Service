@@ -116,7 +116,7 @@ class Post(AuditModel):
         verbose_name="Review Status"
     )
     reviewResponseDate = models.DateTimeField(
-        default=timezone.now,
+        null=True,
         verbose_name="Review Response Date"
         )
     isExternalSource = models.BooleanField(
@@ -193,6 +193,13 @@ class Post(AuditModel):
                 )
 
     def _can_change_reviewStatus(self, new_status):
+        if self.postStatus in ['draft', 'archive']:
+            raise ValueError(
+                f"""
+                Cannot change review status of {self.title} because
+                it is not published yet.
+                """
+                )
         if self.reviewStatus == 'pending' and new_status in ['pending',
                                                              'accept',
                                                              'reject']:
@@ -208,6 +215,7 @@ class Post(AuditModel):
     def change_reviewStatus_to(self, new_status):
         if self._can_change_reviewStatus(new_status):
             self.reviewStatus = new_status
+            self.reviewResponseDate = timezone.now()
             self.save()
         else:
             raise ValueError(
