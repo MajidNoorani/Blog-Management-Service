@@ -110,7 +110,7 @@ class PostAdmin(admin.ModelAdmin):
             _('General Information'),
             {'fields': (
                 'title', 'postCategoryId', 'content', 'image',
-                'authorName', 'isExternalSource', 'externalLink',
+                'isExternalSource', 'externalLink',
                 'readTime', 'excerpt', 'metaDescription'
                 )}
         ),
@@ -152,7 +152,7 @@ class PostAdmin(admin.ModelAdmin):
                        'display_tags', 'isExternalSource', 'externalLink',
                        'readTime', 'metaDescription', 'postStatus',
                        'reviewStatus', 'commentsEnabled', 'excerpt',
-                       'display_seokeywords', 'authorName',
+                       'display_seokeywords',
                        'relatedPosts', 'createdBy', 'createdDate', 'updatedBy',
                        'updatedDate', 'postPublishDate', 'postArchivedDate',
                        'reviewResponseDate'),
@@ -253,9 +253,10 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'updatedBy']
+    list_display = ['name', 'updatedBy', 'isDeleted']
     search_fields = ['name', 'updatedBy__email']
     readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate']
+    list_filter = ['isDeleted']
 
     def save_model(self, request, obj, form, change):
         """
@@ -270,6 +271,9 @@ class TagAdmin(admin.ModelAdmin):
             obj.updatedDate = timezone.now()
 
         super().save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class SEOKeywordsAdmin(admin.ModelAdmin):
@@ -298,7 +302,7 @@ class PostInformationAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ['post', 'viewCount', 'socialShareCount',
                     'ratingCount', 'averageRating', 'commentCount']
-
+    search_fields = ['post__title']
     # edit postCategories page
     fieldsets = (
         (
@@ -311,6 +315,9 @@ class PostInformationAdmin(admin.ModelAdmin):
     )
     readonly_fields = ['post', 'viewCount', 'socialShareCount', 'ratingCount',
                        'averageRating', 'commentCount']
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(models.Tag, TagAdmin)

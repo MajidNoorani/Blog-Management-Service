@@ -4,54 +4,7 @@ from core.models import (
     CommentReaction,
     User
 )
-
-
-class CommentUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['name']
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    """Serializer for Comment Reactions"""
-
-    currentUserReaction = serializers.SerializerMethodField()
-    createdByCurrentUser = serializers.SerializerMethodField()
-    user = CommentUserSerializer(read_only=True)
-
-    class Meta:
-        model = Comment
-        fields = ['id', 'post', 'comment', 'parentComment',
-                  'likeCount', 'disLikeCount', 'createdByCurrentUser',
-                  'currentUserReaction', 'user']
-        read_only_fields = ['id', 'likeCount', 'disLikeCount']
-
-    def get_currentUserReaction(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated and obj:
-            reaction = CommentReaction.objects.filter(
-                user=user, comment=obj
-                ).first()
-            if reaction:
-                return CommentReactionSerializer(reaction).data
-        return None
-
-    def get_createdByCurrentUser(self, obj):
-        user = self.context['request'].user
-        if user.is_authenticated and obj:
-            return obj.user == user
-        return False
-
-    def create(self, validated_data):
-        # tags excluded from validated data
-        comment = Comment.objects.create(**validated_data)
-        return comment
-
-    def update(self, instance, validated_data):
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        return instance
+from drf_spectacular.utils import extend_schema_field
 
 
 class CommentReactionSerializer(serializers.ModelSerializer):
@@ -90,6 +43,56 @@ class CommentReactionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "You do not have permission to edit this comment reaction.")
 
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class CommentUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'image']
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    """Serializer for Comment Reactions"""
+
+    currentUserReaction = serializers.SerializerMethodField()
+    createdByCurrentUser = serializers.SerializerMethodField()
+    user = CommentUserSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'post', 'comment', 'parentComment',
+                  'likeCount', 'disLikeCount', 'createdByCurrentUser',
+                  'currentUserReaction', 'user', 'createdDate']
+        read_only_fields = ['id', 'likeCount', 'disLikeCount']
+
+    @extend_schema_field(CommentReactionSerializer(allow_null=True))
+    def get_currentUserReaction(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated and obj:
+            reaction = CommentReaction.objects.filter(
+                user=user, comment=obj
+                ).first()
+            if reaction:
+                return CommentReactionSerializer(reaction).data
+        return None
+
+    @extend_schema_field(serializers.BooleanField(allow_null=True))
+    def get_createdByCurrentUser(self, obj):
+        user = self.context['request'].user
+        if user.is_authenticated and obj:
+            return obj.user == user
+        return False
+
+    def create(self, validated_data):
+        # tags excluded from validated data
+        comment = Comment.objects.create(**validated_data)
+        return comment
+
+    def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()

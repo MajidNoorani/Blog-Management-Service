@@ -31,6 +31,7 @@ from rest_framework.parsers import (
     # FormParser,
     MultiPartParser
 )
+from django.db.models import F
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -134,6 +135,21 @@ class CustomPageNumberPagination(PageNumberPagination):
                 OpenApiTypes.INT, enum=[0, 1],
                 description='If 1, only returns the current user posts',
             ),
+            OpenApiParameter(
+                'sort',
+                OpenApiTypes.INT,
+                enum=list(range(0, 7)),
+                description="""
+                Sort by Price.
+                0: Sort By created date (descending)
+                1: Sort by read time (ascending),
+                2: Sort by read time (descending),
+                3: Sort by view count (descending),
+                4: Sort by social share count (descending),
+                5: Sort by rating count (descending),
+                6: Sort by average rating (descending),
+                """,
+            ),
         ]
     )
 )
@@ -182,6 +198,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
         createdDate = self.request.query_params.get('createdDate')
+        sort = self.request.query_params.get('sort')
         currentUserPosts = bool(
             int(self.request.query_params.get('currentUserPosts', 0)))
         queryset = self.queryset
@@ -203,22 +220,47 @@ class PostViewSet(mixins.RetrieveModelMixin,
             else:
                 raise PermissionDenied('User is not authenticated')
 
-        queryset.filter(
+        queryset = queryset.distinct().order_by('-createdDate')
+
+        if sort:
+            sort = int(sort)
+            if sort == 1:
+                queryset = queryset.order_by('readTime')
+            elif sort == 2:
+                queryset = queryset.order_by('-readTime')
+            elif sort == 3:
+                queryset = queryset.annotate(
+                    view_count=F('postInformation__viewCount')
+                    ).order_by('-view_count')
+            elif sort == 4:
+                queryset = queryset.annotate(
+                    socialShare_count=F('postInformation__socialShareCount')
+                    ).order_by('-socialShare_count')
+            elif sort == 5:
+                queryset = queryset.annotate(
+                    rating_count=F('postInformation__ratingCount')
+                    ).order_by('-rating_count')
+            elif sort == 6:
+                queryset = queryset.annotate(
+                    average_rating=F(
+                        'postInformation__averageRating')
+                    ).order_by(F('average_rating').desc(nulls_last=True))
+
+        queryset = queryset.filter(
             reviewStatus='accept',
             postStatus='publish')
 
         # all the posts created by current user will be returned
         # no matter they are published or not or accepted
-        if user.is_authenticated:
-            queryset_current_user = queryset.filter(
-                createdBy=user)
+        # if user.is_authenticated:
+        #     queryset_current_user = self.queryset.filter(
+        #         createdBy=user)
 
-            combined_queryset = (
-                queryset_current_user | queryset
-                ).distinct().order_by('-createdDate')
-            return combined_queryset
-
-        return queryset.distinct().order_by('-createdDate')
+        #     combined_queryset = (
+        #         queryset_current_user | queryset
+        #         ).distinct().order_by('-createdDate')
+        #     return combined_queryset
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -386,7 +428,6 @@ class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 class PostRateViewSet(mixins.DestroyModelMixin,
                       mixins.UpdateModelMixin,
                       mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     """View for manage postRate APIs."""
 
