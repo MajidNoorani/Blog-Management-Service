@@ -5,11 +5,13 @@ from .serializers import (
 )
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings # noqa
+from rest_framework.parsers import MultiPartParser
 
 
 class CreateUserView(generics.CreateAPIView):
     """Create a new user in the system."""
     serializer_class = UserSerializer
+    parser_classes = [MultiPartParser]
 
 
 class CreateTokenView(ObtainAuthToken):

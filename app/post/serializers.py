@@ -158,6 +158,12 @@ class PostRateSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PostUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'image']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(
@@ -172,6 +178,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     postInformation = PostInformationSerializer(read_only=True)
     currentUserPostRate = serializers.SerializerMethodField()
+    createdBy = PostUserSerializer(read_only=True)
 
     class Meta:
         model = Post
@@ -180,8 +187,10 @@ class PostSerializer(serializers.ModelSerializer):
                   'externalLink', 'excerpt',
                   'metaDescription', 'readTime', 'relatedPosts',
                   'image', 'createdDate', 'postInformation',
-                  'currentUserPostRate', 'reviewResponseDate']
-        read_only_fields = ['id', 'reviewStatus', 'reviewResponseDate']
+                  'currentUserPostRate', 'reviewResponseDate',
+                  'createdBy']
+        read_only_fields = ['id', 'reviewStatus', 'reviewResponseDate',
+                            'createdBy', 'createdDate', 'postInformation']
         extra_kwargs = {'image': {'required': False}}
 
     @extend_schema_field(serializers.JSONField(allow_null=True))
@@ -256,27 +265,17 @@ class PostSerializer(serializers.ModelSerializer):
         return data
 
 
-class PostUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['name', 'image']
-
-
 class PostDetailSerializer(PostSerializer):
     """Serializer for postCategory detail view."""
-
-    createdBy = PostUserSerializer(read_only=True)
-    # updatedBy = PostUserSerializer(read_only=True)
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + [
             'content',
             'commentsEnabled',
-            'seoKeywords',
-            'createdBy'
+            'seoKeywords'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [
-            'createdBy', 'createdDate',
+            'createdDate',
             'commentsEnabled', 'seoKeywords',
         ]
 
