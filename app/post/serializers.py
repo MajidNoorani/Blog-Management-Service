@@ -5,8 +5,10 @@ from core.models import (
     Tag,
     SEOKeywords,
     PostRate,
-    PostInformation
+    PostInformation,
+    User
 )
+from drf_spectacular.utils import extend_schema_field
 
 
 class PostCategorySerializer(serializers.ModelSerializer):
@@ -35,12 +37,14 @@ class PostCategorySerializer(serializers.ModelSerializer):
 
         return postCategory
 
-    def get_parentPostCategoryId(self, obj):
+    @extend_schema_field(serializers.IntegerField(allow_null=True))
+    def get_parentPostCategoryId(self, obj: object):
         if obj.parentPostCategoryId:
             return obj.parentPostCategoryId.id
         return None
 
-    def get_parentPostCategoryTitle(self, obj):
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_parentPostCategoryTitle(self, obj: object):
         if obj.parentPostCategoryId:
             return obj.parentPostCategoryId.title
         return None
@@ -173,14 +177,15 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'title', 'postCategoryId', 'tags',
                   'postStatus', 'reviewStatus', 'isExternalSource',
-                  'externalLink', 'excerpt', 'authorName',
+                  'externalLink', 'excerpt',
                   'metaDescription', 'readTime', 'relatedPosts',
-                  'image', 'updatedDate', 'postInformation',
-                  'currentUserPostRate']
-        read_only_fields = ['id', 'reviewStatus']
+                  'image', 'createdDate', 'postInformation',
+                  'currentUserPostRate', 'reviewResponseDate']
+        read_only_fields = ['id', 'reviewStatus', 'reviewResponseDate']
         extra_kwargs = {'image': {'required': False}}
 
-    def get_currentUserPostRate(self, obj):
+    @extend_schema_field(serializers.JSONField(allow_null=True))
+    def get_currentUserPostRate(self, obj: object):
         user = self.context['request'].user
         if user.is_authenticated and obj:
             postRate = PostRate.objects.filter(
@@ -251,24 +256,28 @@ class PostSerializer(serializers.ModelSerializer):
         return data
 
 
+class PostUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['name', 'image']
+
+
 class PostDetailSerializer(PostSerializer):
     """Serializer for postCategory detail view."""
+
+    createdBy = PostUserSerializer(read_only=True)
+    # updatedBy = PostUserSerializer(read_only=True)
 
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + [
             'content',
-            'postPublishDate',
             'commentsEnabled',
             'seoKeywords',
-            'createdBy',
-            'createdDate',
-            'updatedBy',
-            'reviewResponseDate'
+            'createdBy'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [
-            'createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-            'postPublishDate', 'commentsEnabled', 'seoKeywords',
-            'reviewResponseDate'
+            'createdBy', 'createdDate',
+            'commentsEnabled', 'seoKeywords',
         ]
 
 

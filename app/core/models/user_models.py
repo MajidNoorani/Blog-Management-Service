@@ -5,6 +5,8 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     PermissionsMixin
 )
+import os
+import uuid
 
 
 class UserManager(BaseUserManager):
@@ -34,6 +36,21 @@ class UserManager(BaseUserManager):
         return user
 
 
+def user_image_file_path(instance, filename):
+    """Generate file path for new post category image"""
+    ext = os.path.splitext(filename)[1]
+    if ext.lower() in {'.jpeg', '.png', '.jpg'}:
+
+        filename = f'{uuid.uuid4()}{ext}'
+        return os.path.join('uploads', 'users_images', filename)
+    else:
+        raise ValueError(
+                f"""
+                Cannot uplaod a file with {ext} format.
+                """
+                )
+
+
 class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
     email = models.EmailField(max_length=255, unique=True)
@@ -41,6 +58,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_activate = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    image = models.ImageField(
+        null=True,
+        blank=True,
+        upload_to=user_image_file_path)
 
     objects = UserManager()
 

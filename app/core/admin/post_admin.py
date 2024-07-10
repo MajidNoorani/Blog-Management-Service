@@ -95,9 +95,10 @@ class PostAdmin(admin.ModelAdmin):
     """Define the admin page for posts."""
     # list of postCategories page
     ordering = ['-updatedDate', 'title']
-    list_display = ['title', 'postStatus', 'postCategoryId',
+    list_display = ['id', 'title', 'postStatus', 'postCategoryId',
                     'reviewStatus', 'display_tags',
-                    'image', 'createdDate', 'createdBy']
+                    'image', 'createdDate', 'postPublishDate',
+                    'createdBy']
     # filters and search
     list_filter = ['postStatus', 'reviewStatus']
     search_fields = ['title',
@@ -109,8 +110,8 @@ class PostAdmin(admin.ModelAdmin):
         (
             _('General Information'),
             {'fields': (
-                'title', 'postCategoryId', 'content', 'image',
-                'authorName', 'isExternalSource', 'externalLink',
+                'id', 'title', 'postCategoryId', 'content', 'image',
+                'isExternalSource', 'externalLink',
                 'readTime', 'excerpt', 'metaDescription'
                 )}
         ),
@@ -141,8 +142,8 @@ class PostAdmin(admin.ModelAdmin):
         ),
     )
 
-    readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate',
-                       'postPublishDate', 'postArchivedDate',
+    readonly_fields = ['id', 'createdBy', 'createdDate', 'updatedBy',
+                       'updatedDate', 'postPublishDate', 'postArchivedDate',
                        'reviewStatus', 'reviewResponseDate']
     # Add post page
     add_fieldsets = (
@@ -152,7 +153,7 @@ class PostAdmin(admin.ModelAdmin):
                        'display_tags', 'isExternalSource', 'externalLink',
                        'readTime', 'metaDescription', 'postStatus',
                        'reviewStatus', 'commentsEnabled', 'excerpt',
-                       'display_seokeywords', 'authorName',
+                       'display_seokeywords',
                        'relatedPosts', 'createdBy', 'createdDate', 'updatedBy',
                        'updatedDate', 'postPublishDate', 'postArchivedDate',
                        'reviewResponseDate'),
@@ -244,6 +245,7 @@ class PostAdmin(admin.ModelAdmin):
 
             # Update the postArchivedDate if status is changed to 'archive'
             if obj.postStatus == 'archive' and 'postStatus' in form.changed_data:  # noqa
+                obj.postPublishDate = None
                 obj.postArchivedDate = timezone.now()
 
         super().save_model(request, obj, form, change)
@@ -253,9 +255,10 @@ class PostAdmin(admin.ModelAdmin):
 
 
 class TagAdmin(admin.ModelAdmin):
-    list_display = ['name', 'updatedBy']
+    list_display = ['name', 'updatedBy', 'isDeleted']
     search_fields = ['name', 'updatedBy__email']
     readonly_fields = ['createdBy', 'createdDate', 'updatedBy', 'updatedDate']
+    list_filter = ['isDeleted']
 
     def save_model(self, request, obj, form, change):
         """
@@ -270,6 +273,9 @@ class TagAdmin(admin.ModelAdmin):
             obj.updatedDate = timezone.now()
 
         super().save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class SEOKeywordsAdmin(admin.ModelAdmin):
@@ -298,7 +304,7 @@ class PostInformationAdmin(admin.ModelAdmin):
     ordering = ['id']
     list_display = ['post', 'viewCount', 'socialShareCount',
                     'ratingCount', 'averageRating', 'commentCount']
-
+    search_fields = ['post__title']
     # edit postCategories page
     fieldsets = (
         (
@@ -311,6 +317,9 @@ class PostInformationAdmin(admin.ModelAdmin):
     )
     readonly_fields = ['post', 'viewCount', 'socialShareCount', 'ratingCount',
                        'averageRating', 'commentCount']
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(models.Tag, TagAdmin)
