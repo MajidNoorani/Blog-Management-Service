@@ -42,6 +42,7 @@ class CommentViewSet(mixins.DestroyModelMixin,
     authentication_classes = [TokenAuthentication]
     permission_classes = [permissions.IsAuthenticated]
     queryset = Comment.objects.all()
+    pagination_class = None
 
     def get_queryset(self):
         """Retrieve comments for the post."""
@@ -62,12 +63,15 @@ class CommentViewSet(mixins.DestroyModelMixin,
             return serializers.CommentSerializer
         return self.serializer_class
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def perform_destroy(self, instance):
         """Destroy a comment by its user"""
-        instance = self.get_object()
-        if instance.user == self.request.user:
-            instance.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        if self.request.user == instance.user:
+            instance.delete_comment(new_delete_status=1)
         else:
             raise PermissionDenied(
                 "You do not have permission to delete this comment.")

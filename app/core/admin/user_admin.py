@@ -9,8 +9,9 @@ class UserAdmin(BaseUserAdmin):
     """Define the admin page for users."""
     # list of users page
     ordering = ['id']
-    list_display = ['email', 'name',]
+    list_display = ['email', 'name', 'image']
     list_filter = ['is_activate', 'is_staff']
+    search_fields = ['email', 'name']
     # edit user page
     fieldsets = (
         (
@@ -19,7 +20,7 @@ class UserAdmin(BaseUserAdmin):
         ),
         (
             _('Personal Information'),
-            {'fields': ('name',)}
+            {'fields': ('name', 'image')}
         ),
         (
             _('Permissions'),
@@ -45,6 +46,7 @@ class UserAdmin(BaseUserAdmin):
                 'is_activate',
                 'is_staff',
                 'is_superuser',
+                'image'
             ),
         }),
     )

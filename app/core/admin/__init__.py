@@ -1,1 +1,1 @@
-from . import post_admin, user_admin  # noqa
+from . import post_admin, user_admin, comment_admin  # noqa
