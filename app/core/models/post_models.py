@@ -93,12 +93,6 @@ class Post(AuditModel):
         upload_to=post_image_file_path,
         default="",
         verbose_name="Post Image")
-    authorName = models.CharField(
-        verbose_name="Author Name",
-        max_length=100,
-        null=False,
-        blank=False
-    )
     tags = models.ManyToManyField(
         'Tag',
         verbose_name="Post Tags")
@@ -122,7 +116,7 @@ class Post(AuditModel):
         verbose_name="Review Status"
     )
     reviewResponseDate = models.DateTimeField(
-        default=timezone.now,
+        null=True,
         verbose_name="Review Response Date"
         )
     isExternalSource = models.BooleanField(
@@ -199,6 +193,13 @@ class Post(AuditModel):
                 )
 
     def _can_change_reviewStatus(self, new_status):
+        if self.postStatus in ['draft', 'archive']:
+            raise ValueError(
+                f"""
+                Cannot change review status of {self.title} because
+                it is not published yet.
+                """
+                )
         if self.reviewStatus == 'pending' and new_status in ['pending',
                                                              'accept',
                                                              'reject']:
@@ -214,6 +215,7 @@ class Post(AuditModel):
     def change_reviewStatus_to(self, new_status):
         if self._can_change_reviewStatus(new_status):
             self.reviewStatus = new_status
+            self.reviewResponseDate = timezone.now()
             self.save()
         else:
             raise ValueError(
@@ -236,6 +238,10 @@ class Post(AuditModel):
 class Tag(AuditModel):
     """Tags for filtering posts."""
     name = models.CharField(max_length=255)
+    isDeleted = models.BooleanField(
+        default=0,
+        verbose_name="Is Deleted"
+    )
 
     class Meta:
         verbose_name = "Tag"

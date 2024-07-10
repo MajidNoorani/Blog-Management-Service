@@ -31,6 +31,7 @@ from rest_framework.parsers import (
     # FormParser,
     MultiPartParser
 )
+from django.db.models import F
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -134,6 +135,21 @@ class CustomPageNumberPagination(PageNumberPagination):
                 OpenApiTypes.INT, enum=[0, 1],
                 description='If 1, only returns the current user posts',
             ),
+            OpenApiParameter(
+                'sort',
+                OpenApiTypes.INT,
+                enum=list(range(0, 7)),
+                description="""
+                Sort by Price.
+                0: Sort By reviewResponseDate (descending)
+                1: Sort by read time (ascending),
+                2: Sort by read time (descending),
+                3: Sort by view count (descending),
+                4: Sort by social share count (descending),
+                5: Sort by rating count (descending),
+                6: Sort by average rating (descending),
+                """,
+            ),
         ]
     )
 )
@@ -182,6 +198,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
         createdDate = self.request.query_params.get('createdDate')
+        sort = self.request.query_params.get('sort')
         currentUserPosts = bool(
             int(self.request.query_params.get('currentUserPosts', 0)))
         queryset = self.queryset
@@ -192,33 +209,61 @@ class PostViewSet(mixins.RetrieveModelMixin,
             postCategoryIds = self._params_to_ints(postCategoryId)
             queryset = queryset.filter(postCategoryId__in=postCategoryIds)
         if authorName:
-            queryset = queryset.filter(authorName=authorName)
+            queryset = queryset.filter(createdBy__name__icontains=authorName)
         if createdDate:
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
         if currentUserPosts:
             if user.is_authenticated:
-                queryset = queryset.filter(createdBy=user)
+                queryset = queryset.filter(createdBy=user,
+                                           postStatus__in=['publish', 'draft'])
                 return queryset.order_by('-createdDate').distinct()
             else:
                 raise PermissionDenied('User is not authenticated')
 
-        queryset.filter(
+        queryset = queryset.distinct().order_by(
+            F('reviewResponseDate').desc(nulls_last=True))
+
+        if sort:
+            sort = int(sort)
+            if sort == 1:
+                queryset = queryset.order_by('readTime')
+            elif sort == 2:
+                queryset = queryset.order_by('-readTime')
+            elif sort == 3:
+                queryset = queryset.annotate(
+                    view_count=F('postInformation__viewCount')
+                    ).order_by('-view_count')
+            elif sort == 4:
+                queryset = queryset.annotate(
+                    socialShare_count=F('postInformation__socialShareCount')
+                    ).order_by('-socialShare_count')
+            elif sort == 5:
+                queryset = queryset.annotate(
+                    rating_count=F('postInformation__ratingCount')
+                    ).order_by('-rating_count')
+            elif sort == 6:
+                queryset = queryset.annotate(
+                    average_rating=F(
+                        'postInformation__averageRating')
+                    ).order_by(F('average_rating').desc(nulls_last=True))
+
+        queryset = queryset.filter(
             reviewStatus='accept',
             postStatus='publish')
 
         # all the posts created by current user will be returned
         # no matter they are published or not or accepted
         if user.is_authenticated:
-            queryset_current_user = queryset.filter(
-                createdBy=user)
+            queryset_current_user = self.queryset.filter(
+                createdBy=user,
+                postStatus__in=['draft']).distinct()
 
             combined_queryset = (
                 queryset_current_user | queryset
                 ).distinct().order_by('-createdDate')
-            return combined_queryset
-
-        return queryset.distinct().order_by('-createdDate')
+            return combined_queryset.distinct()
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
@@ -247,6 +292,34 @@ class PostViewSet(mixins.RetrieveModelMixin,
                         updatedBy=self.request.user,
                         updatedDate=timezone.now(),
                         createdDate=timezone.now())
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        print(request.data)
+        serializer = self.get_serializer(instance,
+                                         data=request.data,
+                                         partial=partial)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            return Response(serializer.data,
+                            status=status.HTTP_201_CREATED,
+                            )
+        except ValidationError as e:
+            return Response(
+                {'detail': str(dict(e.detail))},
+                status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_update(self, serializer):
+        """Create a new post"""
+        instance = self.get_object()
+        if instance.createdBy == self.request.user:
+            serializer.save(updatedBy=self.request.user,
+                            updatedDate=timezone.now())
+        else:
+            raise PermissionDenied(
+                "You do not have permission to update this comment.")
 
     @action(methods=['POST'], detail=True, url_path='upload-image',
             parser_classes=[MultiPartParser])
@@ -386,7 +459,6 @@ class FileUploadViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin):
 class PostRateViewSet(mixins.DestroyModelMixin,
                       mixins.UpdateModelMixin,
                       mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     """View for manage postRate APIs."""
 
