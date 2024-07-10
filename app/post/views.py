@@ -141,7 +141,7 @@ class CustomPageNumberPagination(PageNumberPagination):
                 enum=list(range(0, 7)),
                 description="""
                 Sort by Price.
-                0: Sort By created date (descending)
+                0: Sort By reviewResponseDate (descending)
                 1: Sort by read time (ascending),
                 2: Sort by read time (descending),
                 3: Sort by view count (descending),
@@ -221,7 +221,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
             else:
                 raise PermissionDenied('User is not authenticated')
 
-        queryset = queryset.distinct().order_by('-createdDate')
+        queryset = queryset.distinct().order_by(
+            F('reviewResponseDate').desc(nulls_last=True))
 
         if sort:
             sort = int(sort)

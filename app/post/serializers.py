@@ -181,7 +181,7 @@ class PostSerializer(serializers.ModelSerializer):
                   'metaDescription', 'readTime', 'relatedPosts',
                   'image', 'createdDate', 'postInformation',
                   'currentUserPostRate', 'reviewResponseDate']
-        read_only_fields = ['id', 'reviewStatus','reviewResponseDate']
+        read_only_fields = ['id', 'reviewStatus', 'reviewResponseDate']
         extra_kwargs = {'image': {'required': False}}
 
     @extend_schema_field(serializers.JSONField(allow_null=True))
@@ -273,7 +273,7 @@ class PostDetailSerializer(PostSerializer):
             'content',
             'commentsEnabled',
             'seoKeywords',
-            'createdBy',
+            'createdBy'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [
             'createdBy', 'createdDate',
