@@ -209,7 +209,7 @@ class PostViewSet(mixins.RetrieveModelMixin,
             postCategoryIds = self._params_to_ints(postCategoryId)
             queryset = queryset.filter(postCategoryId__in=postCategoryIds)
         if authorName:
-            queryset = queryset.filter(authorName=authorName)
+            queryset = queryset.filter(createdBy__name__icontains=authorName)
         if createdDate:
             createdDate_rage = self._params_to_strings(createdDate)
             queryset = queryset.filter(createdDate__range=createdDate_rage)
