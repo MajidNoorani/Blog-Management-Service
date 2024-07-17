@@ -126,7 +126,7 @@ class CustomPageNumberPagination(PageNumberPagination):
                 description='ID of post category',
             ),
             OpenApiParameter(
-                'createdDate',
+                'reviewResponseDate',
                 OpenApiTypes.STR,
                 description='Comma separated of the start and end date',
             ),
@@ -197,7 +197,8 @@ class PostViewSet(mixins.RetrieveModelMixin,
         tags = self.request.query_params.get('tags')
         postCategoryId = self.request.query_params.get('postCategoryId')
         authorName = self.request.query_params.get('authorName')
-        createdDate = self.request.query_params.get('createdDate')
+        reviewResponseDate = self.request.query_params.get(
+            'reviewResponseDate')
         sort = self.request.query_params.get('sort')
         currentUserPosts = bool(
             int(self.request.query_params.get('currentUserPosts', 0)))
@@ -210,9 +211,11 @@ class PostViewSet(mixins.RetrieveModelMixin,
             queryset = queryset.filter(postCategoryId__in=postCategoryIds)
         if authorName:
             queryset = queryset.filter(createdBy__name__icontains=authorName)
-        if createdDate:
-            createdDate_rage = self._params_to_strings(createdDate)
-            queryset = queryset.filter(createdDate__range=createdDate_rage)
+        if reviewResponseDate:
+            reviewResponseDate_range = self._params_to_strings(
+                reviewResponseDate)
+            queryset = queryset.filter(
+                reviewResponseDate__range=reviewResponseDate_range)
         if currentUserPosts:
             if user.is_authenticated:
                 queryset = queryset.filter(createdBy=user,

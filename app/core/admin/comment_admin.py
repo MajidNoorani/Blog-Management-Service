@@ -14,9 +14,10 @@ class CommentReactionInline(admin.TabularInline):
 class CommentAdmin(admin.ModelAdmin):
     """Define the admin page for Organization."""
     ordering = ['-createdDate']
-    list_display = ['id', 'comment', 'parentComment', 'user', 'isDeleted']
+    list_display = ['id', 'comment', 'parentComment', 'post',
+                    'user', 'isDeleted']
 
-    search_fields = ['comment', 'user']
+    search_fields = ['comment', 'user__email', 'post__title']
     list_filter = ['isDeleted']
     # edit Organization page
     fieldsets = (

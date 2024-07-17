@@ -17,6 +17,8 @@ from drf_spectacular.utils import (
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from django.db.models import F
+from django.shortcuts import get_object_or_404
+from core.models import Post
 
 
 @extend_schema_view(
@@ -47,21 +49,17 @@ class CommentViewSet(mixins.DestroyModelMixin,
     def get_queryset(self):
         """Retrieve comments for the post."""
         queryset = self.queryset
-        post = self.request.query_params.get('post')
-        if post:
-            queryset = self.queryset.filter(
-                post__id=post
-                )
+        post_id = self.request.query_params.get('post')
+        if post_id:
+            post = get_object_or_404(Post, id=post_id)
+            if not post.commentsEnabled:
+                # No comments if comments are disabled
+                return Comment.objects.none()
+            queryset = queryset.filter(post=post)
             queryset = queryset.annotate(
                 popularity=F('likeCount') + F('disLikeCount')
             ).order_by('-popularity', '-id')
         return queryset.distinct()
-
-    def get_serializer_class(self):
-        """Return appropriate serializer class based on action."""
-        if self.action == 'list':
-            return serializers.CommentSerializer
-        return self.serializer_class
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -87,6 +85,10 @@ class CommentViewSet(mixins.DestroyModelMixin,
 
     def perform_create(self, serializer):
         """Create a new Comment"""
+        post = serializer.validated_data['post']
+        if not post.commentsEnabled:
+            # Do not create comment if comments are disabled
+            raise ValidationError("comments are disabled for this post!")
         serializer.save(user=self.request.user)
 
     def get_permissions(self):
