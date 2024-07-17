@@ -118,12 +118,12 @@ class PostAdmin(admin.ModelAdmin):
         (
             _('Status'),
             {
-                'fields': ('postStatus',),
+                'fields': ('reviewStatus', 'postStatus',),
                 'description': mark_safe(
                     """
                     <p style="font-size: 12px; color: #872b72;">
-                    You can change the status with <strong>Acions</strong>
-                    of list view page.
+                    You can change the Review Status with <strong>Acions</strong>
+                    in the list of posts.
                     </p>
                     """
                     )
