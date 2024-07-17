@@ -171,7 +171,7 @@ class RelatedPostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post  # Replace with your Post model
-        fields = ['title', 'image', 'createdBy', 'postInformation']
+        fields = ['id', 'title', 'image', 'createdBy', 'postInformation']
 
         read_only_fields = ['id', 'title', 'image',
                             'createdBy', 'postInformation']
