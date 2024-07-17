@@ -67,7 +67,7 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'post', 'comment', 'parentComment',
                   'likeCount', 'disLikeCount', 'createdByCurrentUser',
                   'currentUserReaction', 'user', 'createdDate']
-        read_only_fields = ['id', 'likeCount', 'disLikeCount']
+        read_only_fields = ['id', 'likeCount', 'disLikeCount', 'createdDate']
 
     @extend_schema_field(CommentReactionSerializer(allow_null=True))
     def get_currentUserReaction(self, obj):
