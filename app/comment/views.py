@@ -61,12 +61,6 @@ class CommentViewSet(mixins.DestroyModelMixin,
             ).order_by('-popularity', '-id')
         return queryset.distinct()
 
-    # def get_serializer_class(self):
-    #     """Return appropriate serializer class based on action."""
-    #     if self.action == 'list':
-    #         return serializers.CommentSerializer
-    #     return self.serializer_class
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
