@@ -97,7 +97,7 @@ class PostAdmin(admin.ModelAdmin):
     ordering = ['-updatedDate', 'title']
     list_display = ['id', 'title', 'postStatus', 'postCategoryId',
                     'reviewStatus', 'display_tags',
-                    'image', 'createdDate', 'postPublishDate',
+                    'createdDate', 'postPublishDate', 'reviewResponseDate',
                     'createdBy']
     # filters and search
     list_filter = ['postStatus', 'reviewStatus']
