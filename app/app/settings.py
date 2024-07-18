@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 import os
 from .settings_ckedittor import *
+from .settings_jazzmin import *
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,17 +26,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'Verystrongkeyfordjangoblog')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(os.environ.get('DEBUG', 1)))
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    # Add other origins as needed
-]
+ALLOWED_HOSTS = []
+ALLOWED_HOSTS.extend(
+    filter(
+        None,
+        os.environ.get('ALLOWED_HOSTS', '').split(','),
+    )
+)
+
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
+CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_HEADERS = ['*']
+CSRF_TRUSTED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
+# CSRF_COOKIE_SECURE=False
+# CSRF_TRUSTED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
+
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -70,7 +82,7 @@ ROOT_URLCONF = 'app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -96,10 +108,6 @@ DATABASES = {
         'NAME': os.environ.get('DB_NAME', 'BlogDB'),
         'USER': os.environ.get('DB_USER', 'bloguser'),
         'PASSWORD': os.environ.get('DB_PASS', 'verystrongpass2'),
-        # 'HOST': '127.0.0.1',
-        # 'NAME': 'Blog-Django',
-        # 'USER': 'postgres',
-        # 'PASSWORD': 'admin123',
     }
 }
 
@@ -128,7 +136,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'Asia/Tehran'
+TIME_ZONE = 'Canada/Atlantic'
 
 USE_I18N = True
 
@@ -139,19 +147,27 @@ AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+       'rest_framework.parsers.FormParser',
+       'rest_framework.parsers.MultiPartParser',
+       'rest_framework.parsers.JSONParser',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # Number of posts per page
+    'PAGE_SIZE': 10,
 }
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = '/static/static/'
-MEDIA_URL = '/static/media/'
+STATIC_URL = 'static/static/'
+MEDIA_URL = 'static/media/'
 
 MEDIA_ROOT = '/vol/web/media'
 STATIC_ROOT = '/vol/web/static'
-
+print('BASE_DIR ',BASE_DIR)
+STATICFILES_DIRS = [os.path.join(BASE_DIR, STATIC_URL)]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -162,5 +178,23 @@ SPECTACULAR_SETTINGS = {
     # This allows us to upload image through the browsable interface
     'COMPONENT_SPLIT_REQUEST': True,
     'TITLE': 'Blog Management Services',
-    'DESCRIPTION': 'Your API description',
+    'DESCRIPTION': 'All the APIs dedicated to Blog Management service.',
+    'VERSION': '1.0.0',
 }
+
+LOGIN_REDIRECT_URL = '/'
+
+# Email Configuration
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.example.com")
+EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "user@example.com")
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "changeme")
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', "user@example.com")
+EMAIL_SECRET_KEY = os.environ.get('EMAIL_SECRET_KEY', "changeme")
+
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 2000
