@@ -239,7 +239,7 @@ class Tag(AuditModel):
     """Tags for filtering posts."""
     name = models.CharField(max_length=255)
     isDeleted = models.BooleanField(
-        default=0,
+        default=False,
         verbose_name="Is Deleted"
     )
 
@@ -323,6 +323,10 @@ class PostInformation(models.Model):
     def increment_social_share_count(self):
         self.socialShareCount += 1
         self.save()
+
+    class Meta:
+        verbose_name = 'Post Information'
+        verbose_name_plural = 'Posts Information'
 
 
 class PostRate(models.Model):

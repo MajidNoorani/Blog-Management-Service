@@ -112,7 +112,7 @@ class PostAdmin(admin.ModelAdmin):
             {'fields': (
                 'id', 'title', 'postCategoryId', 'content', 'image',
                 'isExternalSource', 'externalLink',
-                'readTime', 'excerpt', 'metaDescription'
+                'readTime', 'excerpt',
                 )}
         ),
         (
@@ -140,6 +140,10 @@ class PostAdmin(admin.ModelAdmin):
                 'postPublishDate', 'postArchivedDate', 'reviewResponseDate'
                 )}
         ),
+        (
+            _('SEO'),
+            {'fields': ('metaDescription',)}
+        ),
     )
 
     readonly_fields = ['id', 'createdBy', 'createdDate', 'updatedBy',
@@ -161,7 +165,7 @@ class PostAdmin(admin.ModelAdmin):
     )
 
     inlines = [
-        TagInline, SEOKeywordsInline, RelatedPostInline
+        SEOKeywordsInline, TagInline, RelatedPostInline
     ]
 
     # def get_form(self, request, obj=None, **kwargs):
@@ -299,7 +303,7 @@ class SEOKeywordsAdmin(admin.ModelAdmin):
 
 
 class PostInformationAdmin(admin.ModelAdmin):
-    """Define the admin page for postCategories."""
+    """Define the admin page for PostInformationAdmin."""
     # list of postCategories page
     ordering = ['id']
     list_display = ['post', 'viewCount', 'socialShareCount',
