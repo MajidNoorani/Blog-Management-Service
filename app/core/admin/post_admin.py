@@ -264,8 +264,10 @@ class PostAdmin(admin.ModelAdmin):
         """Generate a link to the post's information admin page."""
         try:
             post_info = models.PostInformation.objects.get(post=obj)
-            url = reverse('admin:core_postinformation_change', args=[post_info.id])
-            return format_html('<a href="{}">View Post Information</a>', url)
+            url = reverse('admin:core_postinformation_change',
+                          args=[post_info.id])
+            return format_html('<a href="{}">View Post Information</a>',
+                               url)
         except models.PostInformation.DoesNotExist:
             return "No Post Information available"
     post_information_link.short_description = 'Post Information'

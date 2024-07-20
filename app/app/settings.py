@@ -185,6 +185,14 @@ SPECTACULAR_SETTINGS = {
 
 LOGIN_REDIRECT_URL = '/'
 
+# Google configuration
+GOOGLE_OAUTH2_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_OAUTH2_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_OAUTH2_PROJECT_ID = os.environ.get("GOOGLE_PROJECT_ID")
+BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL", default="http://localhost:3000")
+BASE_FRONTEND_URL = os.environ.get("BASE_FRONTEND_URL", default="http://localhost:3000")
+
+
 # Email Configuration
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

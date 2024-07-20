@@ -55,14 +55,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     """User in the system"""
     email = models.EmailField(max_length=255, unique=True)
     name = models.CharField(max_length=255)
-    is_activate = models.BooleanField(default=True)
+    is_activated = models.BooleanField(default=True)
+    is_email_verified = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
     image = models.ImageField(
         null=True,
         blank=True,
         upload_to=user_image_file_path)
-
+    temp_reset_password_code = models.BigIntegerField(null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'  # The field that is used for authentication
