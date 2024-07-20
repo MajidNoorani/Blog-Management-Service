@@ -32,6 +32,8 @@ from rest_framework.parsers import (
     MultiPartParser
 )
 from django.db.models import F
+from django.contrib.postgres.search import TrigramSimilarity
+from django.db.models import Q
 
 
 class PostCategoryViewSet(mixins.RetrieveModelMixin,
@@ -136,6 +138,11 @@ class CustomPageNumberPagination(PageNumberPagination):
                 description='If 1, only returns the current user posts',
             ),
             OpenApiParameter(
+                'search',
+                OpenApiTypes.STR,
+                description='search over title and excerpt.',
+            ),
+            OpenApiParameter(
                 'sort',
                 OpenApiTypes.INT,
                 enum=list(range(0, 7)),
@@ -203,6 +210,23 @@ class PostViewSet(mixins.RetrieveModelMixin,
         currentUserPosts = bool(
             int(self.request.query_params.get('currentUserPosts', 0)))
         queryset = self.queryset
+        search = self.request.query_params.get('search')
+
+        # Applying the filters and sorts
+        if search:
+            # Annotate with trigram similarity for title and content
+            queryset = queryset.annotate(
+                title_similarity=TrigramSimilarity('title', search),
+                excerpt_similarity=TrigramSimilarity('excerpt', search)
+            ).filter(
+                Q(title_similarity__gt=0.1) | Q(excerpt_similarity__gt=0.1)
+            ).order_by(
+                '-title_similarity',
+                '-excerpt_similarity'
+                )
+            # queryset = queryset.filter(
+            #     # Q(title__trigram_word_similar=search),
+            #     content__trigram_word_similar=search)
         if tags:
             tag_ids = self._params_to_ints(tags)
             queryset = queryset.filter(tags__id__in=tag_ids)
