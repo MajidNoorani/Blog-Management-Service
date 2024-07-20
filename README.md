@@ -46,3 +46,27 @@ answer to the questions that appear in the terminal
 ```
 5. sudo docker compose up
 ```
+
+## Enable trigram search:
+For trigram search, the pg_term extention must be installed on postgres.
+
+```
+sudo docker compose run --rm app sh -c "python manage.py makemigrations --empty core"
+```
+
+in the created migration file edit it in this way:
+
+```
+from django.db import migrations
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', <'name of the previous migration file'>),
+    ]
+
+    operations = [
+        migrations.RunSQL("CREATE EXTENSION IF NOT EXISTS pg_trgm;"),
+    ]
+```
