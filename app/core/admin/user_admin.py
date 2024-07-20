@@ -1,21 +1,22 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
+
 from core import models
+
 from django import forms
-from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.models import Group
-
 
 
 class UserAdmin(BaseUserAdmin):
     """Define the admin page for users."""
     # list of users page
     ordering = ['id']
-    list_display = ['email', 'name', 'image']
-    list_filter = ['is_activate', 'is_staff']
+    list_display = ['id', 'email', 'name',
+                    'is_activated', 'is_staff', 'is_email_verified']
+    list_filter = ['is_activated', 'is_email_verified', 'is_staff']
     search_fields = ['email', 'name']
     # edit user page
     fieldsets = (
@@ -29,7 +30,8 @@ class UserAdmin(BaseUserAdmin):
         ),
         (
             _('Permissions'),
-            {'fields': ('is_activate',
+            {'fields': ('is_activated',
+                        'is_email_verified',
                         'is_staff',
                         'is_superuser',)}
         ),
@@ -38,7 +40,7 @@ class UserAdmin(BaseUserAdmin):
             {'fields': ('last_login', 'date_joined',)}
         ),
     )
-    readonly_fields = ['last_login', 'date_joined']
+    readonly_fields = ['last_login', 'date_joined', 'is_email_verified']
     # add user page
     add_fieldsets = (
         (None, {
@@ -48,13 +50,14 @@ class UserAdmin(BaseUserAdmin):
                 'password1',
                 'password2',
                 'name',
-                'is_activate',
+                'is_activated',
+                'is_email_verified',
                 'is_staff',
                 'is_superuser',
-                'image'
             ),
         }),
     )
+
 
 User = get_user_model()
 
@@ -97,6 +100,7 @@ class GroupAdminForm(forms.ModelForm):
 admin.site.unregister(Group)
 
 
+# Create a new Group admin.
 class GroupAdmin(admin.ModelAdmin):
     # Use our custom form.
     form = GroupAdminForm

@@ -23,7 +23,7 @@ from django.urls import path, include
 
 from django.conf.urls.static import static
 from django.conf import settings
-from django.conf.urls.i18n import i18n_patterns
+# from django.conf.urls.i18n import i18n_patterns
 
 
 urlpatterns = [
@@ -38,6 +38,7 @@ urlpatterns = [
     path('api/post/', include('post.urls')),
     path('api/comment/', include('comment.urls')),
     path("ckeditor5/", include('django_ckeditor_5.urls')),
+    path("api/auth/", include(("socialAuth.google.urls", "api"))),
 ]
 
 urlpatterns += [path('i18n/', include('django.conf.urls.i18n')),]
