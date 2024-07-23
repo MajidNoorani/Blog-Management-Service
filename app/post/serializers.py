@@ -9,6 +9,7 @@ from core.models import (
     User
 )
 from drf_spectacular.utils import extend_schema_field
+from django.db.models import F
 
 
 class PostCategorySerializer(serializers.ModelSerializer):
@@ -164,6 +165,18 @@ class PostUserSerializer(serializers.ModelSerializer):
         fields = ['name', 'image']
 
 
+class RelatedPostSerializer(serializers.ModelSerializer):
+    createdBy = PostUserSerializer(read_only=True)
+    postInformation = PostInformationSerializer(read_only=True)
+
+    class Meta:
+        model = Post  # Replace with your Post model
+        fields = ['id', 'title', 'image', 'createdBy', 'postInformation']
+
+        read_only_fields = ['id', 'title', 'image',
+                            'createdBy', 'postInformation']
+
+
 class PostSerializer(serializers.ModelSerializer):
     """Serializer for post"""
     tags = TagSerializer(
@@ -171,10 +184,6 @@ class PostSerializer(serializers.ModelSerializer):
         required=False,
         help_text="""Do not send empty value.
         It must be a list (even an empty list).""")
-
-    relatedPosts = serializers.PrimaryKeyRelatedField(
-        queryset=Post.objects.all(),
-        many=True)
 
     postInformation = PostInformationSerializer(read_only=True)
     currentUserPostRate = serializers.SerializerMethodField()
@@ -185,7 +194,7 @@ class PostSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'postCategoryId', 'tags',
                   'postStatus', 'reviewStatus', 'isExternalSource',
                   'externalLink', 'excerpt',
-                  'metaDescription', 'readTime', 'relatedPosts',
+                  'metaDescription', 'readTime',
                   'image', 'createdDate', 'postInformation',
                   'currentUserPostRate', 'reviewResponseDate',
                   'createdBy']
@@ -268,16 +277,30 @@ class PostSerializer(serializers.ModelSerializer):
 class PostDetailSerializer(PostSerializer):
     """Serializer for postCategory detail view."""
 
+    relatedPosts = serializers.SerializerMethodField()
+
     class Meta(PostSerializer.Meta):
         fields = PostSerializer.Meta.fields + [
             'content',
             'commentsEnabled',
-            'seoKeywords'
+            'seoKeywords',
+            'relatedPosts'
             ]
         read_only_fields = PostSerializer.Meta.read_only_fields + [
             'createdDate',
             'commentsEnabled', 'seoKeywords',
         ]
+
+    def get_relatedPosts(self, obj):
+        related_posts = obj.relatedPosts.filter(
+            reviewStatus='accept',
+            postStatus='publish')
+
+        related_posts = related_posts.annotate(
+                    average_rating=F(
+                        'postInformation__averageRating')
+                    ).order_by(F('average_rating').desc(nulls_last=True))
+        return RelatedPostSerializer(related_posts, many=True).data
 
 
 class PostImageSerializer(serializers.ModelSerializer):

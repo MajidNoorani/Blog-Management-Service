@@ -1,16 +1,22 @@
-version: '3.9'
+version: '3.9' # version of the code below
 
 services:
+  # list of services
   app:
+    # name of service
     build:
       context: . # build the docker file inside the current directory
       args:
-        - DEV=false
-    # ports:
-    #   - "8015:8015" # maps the port of current machine to the port of container
+        - DEV=true
+    ports:
+      - "8015:8015" # maps the port of current machine to the port of container
     volumes:
-      - ./app:/app
+      - ./app:/app # this helps to reflect any changes in code to container (wirthout re-building)
       - blog-static-data:/vol/web
+    command: >
+      sh -c "python manage.py wait_for_db &&
+             python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8015"
     environment:
       - DB_HOST=db
       - DB_NAME=${DB_NAME}
@@ -18,14 +24,13 @@ services:
       - DB_PASS=${DB_PASS}
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_PROJECT_ID=${GOOGLE_PROJECT_ID}
       - BASE_BACKEND_URL=${BASE_BACKEND_URL}
       - BASE_FRONTEND_URL=${BASE_FRONTEND_URL}
       # - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS}
-      # Email
+      - SECURE_SSL_REDIRECT=0
       - EMAIL_HOST=${EMAIL_HOST}
       - EMAIL_PORT =${EMAIL_PORT}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
@@ -43,23 +48,9 @@ services:
     volumes:
       - blog-db-data:/var/lib/postgresql/data/blog
     environment:
-      - PGDATA=/var/lib/postgresql/data/daycare
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
-
-  proxy:
-    build:
-      context: ./proxy
-    restart: always
-    depends_on:
-      - app
-    ports:
-    # on server should be 80:8000
-      - 8000:8000
-      - 4430:4430
-    volumes:
-      - daycare-static-data:/vol/static
 
 volumes:
   blog-db-data:

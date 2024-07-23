@@ -6,6 +6,9 @@ from django.utils import timezone
 from core import models
 from django.utils.safestring import mark_safe
 
+from django.urls import reverse
+from django.utils.html import format_html
+
 
 class PostCategoryAdmin(admin.ModelAdmin):
     """Define the admin page for postCategories."""
@@ -98,7 +101,7 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ['id', 'title', 'postStatus', 'postCategoryId',
                     'reviewStatus', 'display_tags',
                     'createdDate', 'postPublishDate', 'reviewResponseDate',
-                    'createdBy']
+                    'createdBy', 'post_information_link']
     # filters and search
     list_filter = ['postStatus', 'reviewStatus']
     search_fields = ['title',
@@ -112,18 +115,18 @@ class PostAdmin(admin.ModelAdmin):
             {'fields': (
                 'id', 'title', 'postCategoryId', 'content', 'image',
                 'isExternalSource', 'externalLink',
-                'readTime', 'excerpt', 'metaDescription'
+                'readTime', 'excerpt',
                 )}
         ),
         (
             _('Status'),
             {
-                'fields': ('postStatus',),
+                'fields': ('reviewStatus', 'postStatus',),
                 'description': mark_safe(
                     """
                     <p style="font-size: 12px; color: #872b72;">
-                    You can change the status with <strong>Acions</strong>
-                    of list view page.
+                    You can change the Review Status with <strong>Acions</strong>
+                    in the list of posts.
                     </p>
                     """
                     )
@@ -139,6 +142,10 @@ class PostAdmin(admin.ModelAdmin):
                 'createdBy', 'createdDate', 'updatedBy', 'updatedDate',
                 'postPublishDate', 'postArchivedDate', 'reviewResponseDate'
                 )}
+        ),
+        (
+            _('SEO'),
+            {'fields': ('metaDescription',)}
         ),
     )
 
@@ -161,7 +168,7 @@ class PostAdmin(admin.ModelAdmin):
     )
 
     inlines = [
-        TagInline, SEOKeywordsInline, RelatedPostInline
+        SEOKeywordsInline, TagInline, RelatedPostInline
     ]
 
     # def get_form(self, request, obj=None, **kwargs):
@@ -253,6 +260,18 @@ class PostAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def post_information_link(self, obj):
+        """Generate a link to the post's information admin page."""
+        try:
+            post_info = models.PostInformation.objects.get(post=obj)
+            url = reverse('admin:core_postinformation_change',
+                          args=[post_info.id])
+            return format_html('<a href="{}">View Post Information</a>',
+                               url)
+        except models.PostInformation.DoesNotExist:
+            return "No Post Information available"
+    post_information_link.short_description = 'Post Information'
+
 
 class TagAdmin(admin.ModelAdmin):
     list_display = ['name', 'updatedBy', 'isDeleted']
@@ -299,7 +318,7 @@ class SEOKeywordsAdmin(admin.ModelAdmin):
 
 
 class PostInformationAdmin(admin.ModelAdmin):
-    """Define the admin page for postCategories."""
+    """Define the admin page for PostInformationAdmin."""
     # list of postCategories page
     ordering = ['id']
     list_display = ['post', 'viewCount', 'socialShareCount',
