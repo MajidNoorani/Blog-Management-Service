@@ -1,0 +1,3 @@
+[submodule "app/contactUs"]
+	path = app/contactUs
+	url = git@tiva-git.ir:tiva/palett/contactUs.git

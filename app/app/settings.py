@@ -63,7 +63,8 @@ INSTALLED_APPS = [
     'user',
     'post',
     'django_ckeditor_5',
-    'comment'
+    'comment',
+    'contactUs.contactUs'
 ]
 
 MIDDLEWARE = [

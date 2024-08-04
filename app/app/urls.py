@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/comment/', include('comment.urls')),
     path("ckeditor5/", include('django_ckeditor_5.urls')),
     path("api/auth/", include(("socialAuth.google.urls", "api"))),
+    path('api/contact-us/', include('contactUs.contactUs.urls')),
 ]
 
 urlpatterns += [path('i18n/', include('django.conf.urls.i18n')),]
