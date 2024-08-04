@@ -87,8 +87,8 @@ JAZZMIN_SETTINGS = {
     "order_with_respect_to": ["core.postCategory", "core.post",
                               "core.postInformation", "core.tag",
                               "core.seoKeywords", "core.comment",
-                              "core.commentReaction", 'authtoken.token',
-                              'auth.Group'],
+                              "core.commentReaction","contactUs.contactusmessage",
+                              'authtoken.token', 'auth.Group'],
 
     # Custom links to append to app groups, keyed on app name
     # "custom_links": {
@@ -113,6 +113,7 @@ JAZZMIN_SETTINGS = {
         "core.Tag": "fas fa-solid fa-tags",
         "core.PostCategory": "fas fa-solid fa-icons",
         "core.SEOKeywords": "fas fa-solid fa-glasses",
+        "contactUs.contactusmessage": "fas fa-solid fa-envelope",
         "token": "fas fa-solid fa-key",
     },
     # Icons that are used when one is not manually specified

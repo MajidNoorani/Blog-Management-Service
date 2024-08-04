@@ -1,9 +1,8 @@
-version: '3.9' # version of the code below
-
 services:
   # list of services
   app:
     # name of service
+    container_name: BlogServices
     build:
       context: . # build the docker file inside the current directory
       args:
@@ -42,12 +41,14 @@ services:
       - db
 
   db:
+    container_name: BlogServices_DB
     image: postgres:16-alpine
     ports:
       - 5433:5432
     volumes:
       - blog-db-data:/var/lib/postgresql/data/blog
     environment:
+      - PGDATA=/var/lib/postgresql/data/blog
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASS}
