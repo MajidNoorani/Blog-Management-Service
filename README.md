@@ -1,27 +1,14 @@
 # Blog Service
+This repo contains a fully featured blog management service. It Offers these features:
+1. Admin panel for managing posts, users, comments, and contact Us messages
+2. Information and statistics about posts, such as total number of views, rating, and total share counts
+3. Integrated CKeditor to have rich text field for posts.
+4. user friendly admin panel, designed by Jazzmin Django package
+5. Google authentication
+6. Email verification and forgot passowrd flow
+7. Trigram to enable fuzzy search in PostgreSQL
 
-## Installation
 
-```
-1. sudo apt update
-2. sudo apt install apt-transport-https ca-certificates curl software-properties-common
-3. curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-4. sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-5. sudo apt update
-6. sudo apt install docker-ce
-7. sudo docker --version
-8. sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-9. sudo chmod +x /usr/local/bin/docker-compose
-10. sudo docker compose version
-```
-if you get the version of docker compose, everything is ok
-
-## Clone the codes
-
-```
-1. git clone git@tiva-git.ir:tiva/blog-service.git
-2. git checkout master
-```
 
 ## Deploy
 for run and deploy the code. first put a **.env** file in the directory like [.env.example](.env.example)
