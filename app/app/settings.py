@@ -32,7 +32,7 @@ ALLOWED_HOSTS = []
 ALLOWED_HOSTS.extend(
     filter(
         None,
-        os.environ.get('ALLOWED_HOSTS', '31.214.251.233').split(','),
+        os.environ.get('ALLOWED_HOSTS', 'domain.com').split(','),
     )
 )
 
@@ -190,14 +190,14 @@ LOGIN_REDIRECT_URL = '/'
 GOOGLE_OAUTH2_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_OAUTH2_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_OAUTH2_PROJECT_ID = os.environ.get("GOOGLE_PROJECT_ID")
-BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL", default="http://31.214.251.233:8014")
+BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL", default="http://api.domain.com")
 BASE_FRONTEND_URL = os.environ.get("BASE_FRONTEND_URL", default="http://localhost:3000")
 
 
 # Email Configuration
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.daycarehub.info")
+EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.domain.com")
 EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
