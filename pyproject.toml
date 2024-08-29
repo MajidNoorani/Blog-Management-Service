@@ -1,0 +1,99 @@
+[project]
+name = "blog-management-service"
+version = "0.1.0"
+description = "A Django-based blog management service"
+readme = "README.md"
+authors = [{name = "MajidNoorani", email = "majid.noorani93@gmail.com"}]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+requires-python = ">=3.12"
+
+dependencies = [
+    "Django>=5.0.2,<5.1",
+    "djangorestframework>=3.15.0,<3.16",
+    "Pillow>=10.3.0,<10.4",
+    "psycopg2>=2.9.9,<2.10",
+    "drf-spectacular>=0.27.2,<0.28",
+    "django-ckeditor-5>=0.2.13,<0.3",
+    "django-cors-headers>=4.3.1,<4.4",
+    "django-jazzmin>=3.0.0,<3.1",
+    "django-jsonform>=2.22.0,<2.23",
+    "uwsgi>=2.0.20,<2.1",
+    "PyJWT>=2.8.0,<2.9",
+    "requests>=2.32.3,<2.33",
+    "oauthlib>=3.2.2,<3.3",
+    "django-mail-admin>=0.3.2,<0.4",
+    "itsdangerous>=2.2.0,<2.3",
+    "django-appmail>=6.0,<6.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "flake8>=7.0.0,<7.1",
+]
+
+[build-system]
+requires = ["setuptools>=68.1.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 79
+fix = true
+select = ["E", "F", "I", "W", "A", "B", "Q", "C", "S"]
+ignore = ["B008", "E501", "S101", "A003", "B904"]
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    "build",
+    "dist",
+    "venv",
+    "static",
+    "migrations",
+    "__pycache__",
+    ".pytest_cache",
+    "__init__.py",
+]
+target-version = "py312"
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["S105", "S106"]
+
+[tool.mypy]
+ignore_missing_imports = true
+disable_error_code = "attr-defined, valid-type"
+disallow_untyped_defs = true
+mypy_path = "app"
+exclude = "venv|migrations|build|dist|docs"
+
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "app.settings"
+
+[tool.pytest.ini_options]
+python_files = "tests.py test_*.py"
+DJANGO_SETTINGS_MODULE = "app.settings"

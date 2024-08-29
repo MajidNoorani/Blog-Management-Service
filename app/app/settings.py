@@ -32,17 +32,16 @@ ALLOWED_HOSTS = []
 ALLOWED_HOSTS.extend(
     filter(
         None,
-        os.environ.get('ALLOWED_HOSTS', 'domain.com').split(','),
+        os.environ.get('ALLOWED_HOSTS', '31.214.251.233').split(','),
     )
 )
 
-# CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
 CORS_ALLOW_CREDENTIALS = True
 # CORS_ALLOW_HEADERS = ['*']
-CSRF_TRUSTED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
+CSRF_TRUSTED_ORIGINS = ["http://localhost:3000"]
 # CSRF_COOKIE_SECURE=False
-# CSRF_TRUSTED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
+CSRF_TRUSTED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", 'http://localhost:3000').split(',')
 
 # Application definition
 
@@ -70,12 +69,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'post.middleware.PostViewCountMiddleware'
 ]
 
@@ -190,20 +189,20 @@ LOGIN_REDIRECT_URL = '/'
 GOOGLE_OAUTH2_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_OAUTH2_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_OAUTH2_PROJECT_ID = os.environ.get("GOOGLE_PROJECT_ID")
-BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL", default="http://api.domain.com")
+BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL", default="http://31.214.251.233:8014")
 BASE_FRONTEND_URL = os.environ.get("BASE_FRONTEND_URL", default="http://localhost:3000")
 
 
 # Email Configuration
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.domain.com")
+EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.daycarehub.info")
 EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "mail@domain.com")
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "changeme")
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', "mail@domain.com")
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "support@daycarehub.info")
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "Daycare2024@Tiva")
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', "support@daycarehub.info")
 EMAIL_SECRET_KEY = os.environ.get('EMAIL_SECRET_KEY', "changeme")
 
 
