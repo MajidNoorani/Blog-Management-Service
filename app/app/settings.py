@@ -196,13 +196,13 @@ BASE_FRONTEND_URL = os.environ.get("BASE_FRONTEND_URL", default="http://localhos
 # Email Configuration
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.daycarehub.info")
+EMAIL_HOST = os.environ.get('EMAIL_HOST', "mail.example.com")
 EMAIL_PORT = os.environ.get('EMAIL_PORT', 465)
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "support@daycarehub.info")
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "Daycare2024@Tiva")
-DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', "support@daycarehub.info")
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', "mail@example.com")
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', "changeme")
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', "mail@example.com")
 EMAIL_SECRET_KEY = os.environ.get('EMAIL_SECRET_KEY', "changeme")
 
 
