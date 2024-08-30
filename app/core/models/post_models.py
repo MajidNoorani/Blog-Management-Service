@@ -61,6 +61,31 @@ class PostCategory(AuditModel):
         return self.title
 
 
+class PostQuerySet(models.QuerySet):
+    def high_rated(self):
+        return self.annotate(
+            avg_rating=Avg(
+                'postInformation__averageRating')).filter(avg_rating__gte=4)
+
+    def accepted(self):
+        return self.filter(reviewStatus='accept')
+
+    def published(self):
+        return self.filter(postStatus='publish')
+
+class PostManager(models.Manager):
+    def get_queryset(self):
+        return PostQuerySet(self.model, using=self._db)
+
+    def published_and_accepted(self):
+        return self.get_queryset().published().accepted()
+
+    def published_high_rated_and_accepted(self):
+        return self.get_queryset().published().high_rated().accepted()
+
+
+
+
 class Post(AuditModel):
     """Post objects"""
     STATUS_CHOICES = [
@@ -167,6 +192,8 @@ class Post(AuditModel):
         blank=True
         )
 
+    objects = PostManager()
+    
     class Meta:
         verbose_name = "Post"
         verbose_name_plural = "Posts"
