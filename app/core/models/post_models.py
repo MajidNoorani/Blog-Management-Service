@@ -80,10 +80,13 @@ class PostManager(models.Manager):
     def published_and_accepted(self):
         return self.get_queryset().published().accepted()
 
-    def published_high_rated_and_accepted(self):
-        return self.get_queryset().published().high_rated().accepted()
+    def get_random_high_rated_posts(self, count):
+        high_rated_posts = self.get_queryset().published().high_rated().accepted()
 
-
+        # Ensure the count does not exceed the number of available posts
+        if count > high_rated_posts.count():
+            count = high_rated_posts.count()
+        return random.sample(list(high_rated_posts), count)
 
 
 class Post(AuditModel):
